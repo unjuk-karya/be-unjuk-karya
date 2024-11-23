@@ -4,9 +4,10 @@ const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 
 const authService = {
-  register: async (email, password, confirmPassword, name, phone, address) => {
+  register: async (email, username, password, confirmPassword, name, phone, address) => {
     handleValidation({
       email: { value: email, message: "The email field is required." },
+      username: { value: username, message: "The username field is required." },
       password: { value: password, message: "The password field is required." },
       confirmPassword: { value: confirmPassword, message: "The confirm password field is required." },
       name: { value: name, message: "The name field is required." }
@@ -19,50 +20,68 @@ const authService = {
       });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    const existingUserEmail = await prisma.user.findUnique({ where: { email } });
+    const existingUserUsername = await prisma.user.findUnique({ where: { username } });
+
+    if (existingUserEmail) {
       throw new ValidationError({
         email: ["The email has already been taken."]
+      });
+    }
+
+    if (existingUserUsername) {
+      throw new ValidationError({
+        username: ["The username has already been taken."]
       });
     }
 
     const user = await prisma.user.create({
       data: {
         email,
+        username,
         password: await bcrypt.hash(password, 10),
         name,
         phone,
         address
       },
-      select: { id: true, email: true, name: true, phone: true, address: true}
+      select: { id: true, email: true, username: true, name: true, phone: true, address: true }
     });
 
     return user;
   },
-  login: async (email, password) => {
+  login: async (identifier, password) => {
     handleValidation({
-      email: { value: email, message: "The email field is required." },
+      identifier: { value: identifier, message: "The email or username field is required." },
       password: { value: password, message: "The password field is required." }
     });
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier }
+        ]
+      }
+    });
+
     const isValidCredentials = user && (await bcrypt.compare(password, user.password));
 
     if (!isValidCredentials) {
       throw new ValidationError({
-        email: ["The email or password is incorrect."]
+        identifier: ["The credentials provided are incorrect."]
       });
     }
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET, 
+      process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
     return {
       id: user.id,
       email: user.email,
+      username: user.username,
       name: user.name,
       phone: user.phone,
       address: user.address,
@@ -71,5 +90,4 @@ const authService = {
     };
   }
 };
-
 module.exports = authService;
