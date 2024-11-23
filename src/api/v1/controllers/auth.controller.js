@@ -4,8 +4,8 @@ const { createSuccessResponse, createErrorResponse } = require('../../../utils/r
 const authController = {
   register: async (req, res) => {
     try {
-      const { email, password, confirmPassword, name, phone, address } = req.body;
-      const result = await authService.register(email, password, confirmPassword, name, phone, address);
+      const { email, username, password, confirmPassword, name, phone, address } = req.body;
+      const result = await authService.register(email, username, password, confirmPassword, name, phone, address);
       return res.status(201).json(createSuccessResponse(result, "Registration successful", 201));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
@@ -13,8 +13,8 @@ const authController = {
   },
   login: async (req, res) => {
     try {
-      const { email, password } = req.body;
-      const result = await authService.login(email, password);
+      const { identifier, password } = req.body;
+      const result = await authService.login(identifier, password);
       return res.status(200).json(createSuccessResponse(result, "Login successful", 200));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
