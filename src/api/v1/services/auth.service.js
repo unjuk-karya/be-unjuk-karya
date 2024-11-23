@@ -4,7 +4,9 @@ const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 
 const authService = {
-  register: async (email, username, password, confirmPassword, name, phone, address) => {
+  register: async (data) => {
+    const { email, username, password, confirmPassword, name, phone, address } = data;
+
     handleValidation({
       email: { value: email, message: "The email field is required." },
       username: { value: username, message: "The username field is required." },
@@ -35,59 +37,85 @@ const authService = {
       });
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        password: await bcrypt.hash(password, 10),
-        name,
-        phone,
-        address
-      },
-      select: { id: true, email: true, username: true, name: true, phone: true, address: true }
-    });
+    try {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          username,
+          password: await bcrypt.hash(password, 10),
+          name,
+          phone,
+          address
+        },
+        select: { 
+          id: true, 
+          email: true, 
+          username: true, 
+          name: true, 
+          phone: true, 
+          address: true 
+        }
+      });
 
-    return user;
+      return user;
+    } catch (error) {
+      throw new ValidationError({
+        database: ["Failed to register user."]
+      });
+    }
   },
-  login: async (identifier, password) => {
+
+  login: async (data) => {
+    const { identifier, password } = data;
+
     handleValidation({
       identifier: { value: identifier, message: "The email or username field is required." },
       password: { value: password, message: "The password field is required." }
     });
 
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: identifier },
-          { username: identifier }
-        ]
+    try {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: identifier },
+            { username: identifier }
+          ]
+        }
+      });
+
+      const isValidCredentials = user && (await bcrypt.compare(password, user.password));
+
+      if (!isValidCredentials) {
+        throw new ValidationError({
+          identifier: ["The credentials provided are incorrect."]
+        });
       }
-    });
 
-    const isValidCredentials = user && (await bcrypt.compare(password, user.password));
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
 
-    if (!isValidCredentials) {
+      return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        phone: user.phone,
+        address: user.address,
+        isVerified: user.isVerified,
+        token
+      };
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
       throw new ValidationError({
-        identifier: ["The credentials provided are incorrect."]
+        database: ["Failed to login."]
       });
     }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    return {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      name: user.name,
-      phone: user.phone,
-      address: user.address,
-      isVerified: user.isVerified,
-      token
-    };
   }
 };
+
 module.exports = authService;
