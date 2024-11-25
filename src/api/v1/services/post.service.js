@@ -142,6 +142,48 @@ const postService = {
     } catch (error) {
       throw new ValidationError({ database: ["Failed to delete post."] });
     }
+  },
+  getPostById: async (id) => {
+    const post = await prisma.post.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            username: true
+          }
+        },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        likes: true,
+        _count: {
+          select: {
+            comments: true,
+            likes: true
+          }
+        }
+      }
+    });
+
+    if (!post) {
+      throw new ValidationError({ post: ["Post not found."] });
+    }
+
+    return post;
   }
 };
 
