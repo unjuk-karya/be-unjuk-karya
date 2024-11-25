@@ -4,17 +4,16 @@ const { createSuccessResponse, createErrorResponse } = require('../../../utils/r
 const authController = {
   register: async (req, res) => {
     try {
-      const { email, username, password, confirmPassword, name, phone, address } = req.body;
-      const result = await authService.register(email, username, password, confirmPassword, name, phone, address);
+      const result = await authService.register(req.body);
       return res.status(201).json(createSuccessResponse(result, "Registration successful", 201));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   login: async (req, res) => {
     try {
-      const { identifier, password } = req.body;
-      const result = await authService.login(identifier, password);
+      const result = await authService.login(req.body);
       return res.status(200).json(createSuccessResponse(result, "Login successful", 200));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));

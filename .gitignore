@@ -90,3 +90,5 @@ Thumbs.db
 prisma/migrations/
 
 app.yaml
+
+uploads/
