@@ -1,4 +1,4 @@
-const { handleValidation, ValidationError } = require('../../../utils/responseHandler');
+const { handleValidation, NotFoundError, UnauthorizedError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
 const fs = require('fs').promises;
 
@@ -13,7 +13,7 @@ const postService = {
     });
 
     try {
-      const post = await prisma.post.create({
+      return await prisma.post.create({
         data: {
           title,
           content,
@@ -37,14 +37,11 @@ const postService = {
           }
         }
       });
-
-      return post;
     } catch (error) {
-      throw new ValidationError({
-        database: ["Failed to create post."]
-      });
+      throw new Error("Failed to create post");
     }
   },
+
   updatePost: async (data) => {
     const { id, userId, title, content, image } = data;
 
@@ -58,15 +55,11 @@ const postService = {
     });
 
     if (!existingPost) {
-      throw new ValidationError({
-        post: ["Post not found."]
-      });
+      throw new NotFoundError("Post");
     }
 
     if (existingPost.userId !== parseInt(userId)) {
-      throw new ValidationError({
-        auth: ["Unauthorized to update this post."]
-      });
+      throw new UnauthorizedError("You are not authorized to update this post");
     }
 
     try {
@@ -75,7 +68,7 @@ const postService = {
           .catch(err => console.error('Error deleting old image:', err));
       }
 
-      const post = await prisma.post.update({
+      return await prisma.post.update({
         where: { id: parseInt(id) },
         data: {
           title,
@@ -99,18 +92,15 @@ const postService = {
           }
         }
       });
-
-      return post;
     } catch (error) {
       if (image) {
         await fs.unlink(image)
           .catch(err => console.error('Error deleting new image:', err));
       }
-      throw new ValidationError({
-        database: ["Failed to update post."]
-      });
+      throw new Error("Failed to update post");
     }
   },
+
   deletePost: async (data) => {
     const { id, userId } = data;
 
@@ -119,11 +109,11 @@ const postService = {
     });
 
     if (!existingPost) {
-      throw new ValidationError({ post: ["Post not found."] });
+      throw new NotFoundError("Post");
     }
 
     if (existingPost.userId !== parseInt(userId)) {
-      throw new ValidationError({ auth: ["Unauthorized to delete this post."] });
+      throw new UnauthorizedError("You are not authorized to delete this post");
     }
 
     try {
@@ -140,9 +130,10 @@ const postService = {
 
       return true;
     } catch (error) {
-      throw new ValidationError({ database: ["Failed to delete post."] });
+      throw new Error("Failed to delete post");
     }
   },
+
   getPostById: async (id) => {
     const post = await prisma.post.findUnique({
       where: { id: parseInt(id) },
@@ -180,10 +171,45 @@ const postService = {
     });
 
     if (!post) {
-      throw new ValidationError({ post: ["Post not found."] });
+      throw new NotFoundError("Post");
     }
 
     return post;
+  },
+
+  toggleLike: async (data) => {
+    const { postId, userId } = data;
+
+    const post = await prisma.post.findUnique({
+      where: { id: parseInt(postId) }
+    });
+  
+    if (!post) {
+      throw new NotFoundError("Post");
+    }
+
+    const existingLike = await prisma.like.findFirst({
+      where: { 
+        postId: parseInt(postId),
+        userId: parseInt(userId)
+      }
+    });
+
+    if (existingLike) {
+      await prisma.like.delete({
+        where: { id: existingLike.id }
+      });
+      return { liked: false };
+    }
+
+    await prisma.like.create({
+      data: {
+        postId: parseInt(postId),
+        userId: parseInt(userId)
+      }
+    });
+
+    return { liked: true };
   }
 };
 
