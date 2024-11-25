@@ -60,6 +60,26 @@ const postController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+  deletePost: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      await postService.deletePost({ id, userId });
+      return res.json(createSuccessResponse(null, "Post deleted successfully"));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
+  getPostById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await postService.getPostById(id);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 
