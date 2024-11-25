@@ -13,6 +13,18 @@ class ValidationError extends BaseError {
   }
 }
 
+class NotFoundError extends BaseError {
+  constructor(resource) {
+    super(`${resource} not found.`, 404, { [resource.toLowerCase()]: ["Not found"] });
+  }
+}
+
+class UnauthorizedError extends BaseError {
+  constructor(message = "Unauthorized access.") {
+    super(message, 401, { auth: ["Unauthorized"] });
+  }
+}
+
 const createErrorResponse = (error) => ({
   status: error.status || 500,
   message: error.message,
@@ -31,12 +43,13 @@ const handleValidation = (fields) => {
     if (!value) acc[field] = [message];
     return acc;
   }, {});
-
   if (Object.keys(errors).length > 0) throw new ValidationError(errors);
 };
 
 module.exports = {
   ValidationError,
+  NotFoundError,
+  UnauthorizedError,
   createErrorResponse,
   createSuccessResponse,
   handleValidation
