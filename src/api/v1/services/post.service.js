@@ -28,12 +28,6 @@ const postService = {
               email: true,
               username: true
             }
-          },
-          _count: {
-            select: {
-              comments: true,
-              likes: true
-            }
           }
         }
       });
@@ -83,12 +77,6 @@ const postService = {
               email: true,
               username: true
             }
-          },
-          _count: {
-            select: {
-              comments: true,
-              likes: true
-            }
           }
         }
       });
@@ -120,6 +108,7 @@ const postService = {
       await prisma.$transaction([
         prisma.comment.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.like.deleteMany({ where: { postId: parseInt(id) } }),
+        prisma.favorite.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.post.delete({ where: { id: parseInt(id) } })
       ]);
 
@@ -134,47 +123,57 @@ const postService = {
     }
   },
 
-  getPostById: async (id) => {
-    const post = await prisma.post.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            username: true
-          }
-        },
-        comments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                username: true
-              }
+  getPostById: async (id, userId) => {
+    try {
+      const post = await prisma.post.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              username: true
             }
           },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        },
-        likes: true,
-        _count: {
-          select: {
-            comments: true,
-            likes: true
+          likes: {
+            where: {
+              userId: parseInt(userId)
+            }
+          },
+          favorites: {
+            where: {
+              userId: parseInt(userId)
+            }
+          },
+          _count: {
+            select: {
+              comments: true,
+              likes: true
+            }
           }
         }
+      });
+
+      if (!post) {
+        throw new NotFoundError("Post");
       }
-    });
 
-    if (!post) {
-      throw new NotFoundError("Post");
+      const { likes, favorites, _count, ...postData } = post;
+
+      return {
+        ...postData,
+        isLiked: likes.length > 0,
+        isFavorite: favorites.length > 0,
+        likesCount: _count.likes,
+        commentsCount: _count.comments
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new Error("Failed to get post");
     }
-
-    return post;
   },
 };
 
