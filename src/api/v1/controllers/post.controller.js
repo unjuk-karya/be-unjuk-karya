@@ -80,19 +80,6 @@ const postController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
-  },
-  toggleLike: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { id: postId } = req.params;
-
-      const result = await postService.toggleLike({ postId, userId });
-      return res.json(createSuccessResponse(result, 
-        result.liked ? "Post liked successfully" : "Post unliked successfully"
-      ));
-    } catch (error) {
-      return res.status(error.status || 500).json(createErrorResponse(error));
-    }
   }
 };
 
