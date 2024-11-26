@@ -47,21 +47,19 @@ const authService = {
           phone,
           address
         },
-        select: { 
-          id: true, 
-          email: true, 
-          username: true, 
-          name: true, 
-          phone: true, 
-          address: true 
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          name: true,
+          phone: true,
+          address: true
         }
       });
 
       return user;
     } catch (error) {
-      throw new ValidationError({
-        database: ["Failed to register user."]
-      });
+      throw new Error("Failed to register user");
     }
   },
 
@@ -73,24 +71,24 @@ const authService = {
       password: { value: password, message: "The password field is required." }
     });
 
-    try {
-      const user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: identifier },
-            { username: identifier }
-          ]
-        }
-      });
-
-      const isValidCredentials = user && (await bcrypt.compare(password, user.password));
-
-      if (!isValidCredentials) {
-        throw new ValidationError({
-          identifier: ["The credentials provided are incorrect."]
-        });
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier }
+        ]
       }
+    });
 
+    const isValidCredentials = user && (await bcrypt.compare(password, user.password));
+
+    if (!isValidCredentials) {
+      throw new ValidationError({
+        identifier: ["The credentials provided are incorrect."]
+      });
+    }
+
+    try {
       const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env.JWT_SECRET,
@@ -108,12 +106,7 @@ const authService = {
         token
       };
     } catch (error) {
-      if (error instanceof ValidationError) {
-        throw error;
-      }
-      throw new ValidationError({
-        database: ["Failed to login."]
-      });
+      throw new Error("Failed to login");
     }
   }
 };

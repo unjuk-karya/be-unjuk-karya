@@ -75,7 +75,8 @@ const postController = {
   getPostById: async (req, res) => {
     try {
       const { id } = req.params;
-      const result = await postService.getPostById(id);
+      const userId = req.user.id;
+      const result = await postService.getPostById(id, userId);
       return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
