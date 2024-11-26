@@ -29,7 +29,8 @@ const commentService = {
             select: {
               id: true,
               name: true,
-              username: true
+              username: true,
+              avatar: true
             }
           }
         }
@@ -67,7 +68,8 @@ const commentService = {
             select: {
               id: true,
               name: true,
-              username: true
+              username: true,
+              avatar: true
             }
           }
         }
@@ -118,7 +120,8 @@ const commentService = {
           select: {
             id: true,
             name: true,
-            username: true
+            username: true,
+            avatar: true
           }
         }
       },

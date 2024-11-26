@@ -54,7 +54,8 @@ const likeService = {
                     select: {
                         id: true,
                         name: true,
-                        username: true
+                        username: true,
+                        avatar: true
                     }
                 }
             },

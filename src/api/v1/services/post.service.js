@@ -25,8 +25,8 @@ const postService = {
             select: {
               id: true,
               name: true,
-              email: true,
-              username: true
+              username: true,
+              avatar: true
             }
           }
         }
@@ -74,8 +74,8 @@ const postService = {
             select: {
               id: true,
               name: true,
-              email: true,
-              username: true
+              username: true,
+              avatar: true
             }
           }
         }
@@ -132,8 +132,8 @@ const postService = {
             select: {
               id: true,
               name: true,
-              email: true,
-              username: true
+              username: true,
+              avatar: true
             }
           },
           likes: {

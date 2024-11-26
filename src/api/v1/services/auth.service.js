@@ -102,7 +102,7 @@ const authService = {
         name: user.name,
         phone: user.phone,
         address: user.address,
-        isVerified: user.isVerified,
+        avatar: user.avatar,
         token
       };
     } catch (error) {
