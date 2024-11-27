@@ -8,54 +8,56 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  password  String
-  name      String
-  username  String     @unique
-  phone     String?
-  address   String?
-  avatar    String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  posts     Post[]
-  comments  Comment[]
-  likes     Like[]
-  favorites Favorite[]
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  password      String
+  name          String
+  username      String        @unique
+  phone         String?
+  address       String?
+  avatar        String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  posts         Post[]
+  comments      Comment[]
+  postLikes     PostLike[]    
+  commentLikes  CommentLike[] 
+  favorites     Favorite[]
 
   @@map("users")
 }
 
 model Post {
-  id        Int        @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   title     String
   content   String
   image     String
   userId    Int
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id])
   comments  Comment[]
-  likes     Like[]
+  likes     PostLike[]  
   favorites Favorite[]
 
   @@map("posts")
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   content   String
   userId    Int
   postId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id])
+  post      Post          @relation(fields: [postId], references: [id])
+  likes     CommentLike[] 
 
   @@map("comments")
 }
 
-model Like {
+model PostLike {
   id        Int      @id @default(autoincrement())
   userId    Int
   postId    Int
@@ -64,7 +66,19 @@ model Like {
   post      Post     @relation(fields: [postId], references: [id])
 
   @@unique([userId, postId])
-  @@map("likes")
+  @@map("post_likes")
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  commentId Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  comment   Comment  @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+  @@map("comment_likes")
 }
 
 model Favorite {

@@ -59,8 +59,9 @@ const commentController = {
   getPostComments: async (req, res) => {
     try {
       const { postId } = req.params;
-      const result = await commentService.getPostComments(postId);
-      return res.json(createSuccessResponse(result, "Comments retrieved successfully"));
+      const userId = req.user?.id;
+      const result = await commentService.getPostComments(postId, userId);
+      return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
