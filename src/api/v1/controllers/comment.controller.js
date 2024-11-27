@@ -22,27 +22,6 @@ const commentController = {
     }
   },
 
-  updateComment: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { id, postId } = req.params; 
-      const { content } = req.body;
-
-      const result = await commentService.updateComment({
-        id,
-        userId,
-        postId,
-        content
-      });
-
-      return res.json(
-        createSuccessResponse(result, "Comment updated successfully")
-      );
-    } catch (error) {
-      return res.status(error.status || 500).json(createErrorResponse(error));
-    }
-  },
-
   deleteComment: async (req, res) => {
     try {
       const userId = req.user.id;
