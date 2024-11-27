@@ -1,7 +1,7 @@
 const { NotFoundError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
 
-const likeService = {
+const postLikeService = {
     toggleLike: async (data) => {
         const { postId, userId } = data;
         const post = await prisma.post.findUnique({
@@ -12,7 +12,7 @@ const likeService = {
             throw new NotFoundError("Post");
         }
 
-        const existingLike = await prisma.like.findFirst({
+        const existingLike = await prisma.postLike.findFirst({
             where: {
                 postId: parseInt(postId),
                 userId: parseInt(userId)
@@ -20,13 +20,13 @@ const likeService = {
         });
 
         if (existingLike) {
-            await prisma.like.delete({
+            await prisma.postLike.delete({
                 where: { id: existingLike.id }
             });
             return { liked: false };
         }
 
-        await prisma.like.create({
+        await prisma.postLike.create({
             data: {
                 postId: parseInt(postId),
                 userId: parseInt(userId)
@@ -45,7 +45,7 @@ const likeService = {
             throw new NotFoundError("Post");
         }
 
-        return await prisma.like.findMany({
+        return await prisma.postLike.findMany({
             where: { 
                 postId: parseInt(postId) 
             },
@@ -66,4 +66,4 @@ const likeService = {
     }
 };
 
-module.exports = likeService;
+module.exports = postLikeService;

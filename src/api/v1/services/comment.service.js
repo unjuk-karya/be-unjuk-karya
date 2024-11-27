@@ -104,7 +104,7 @@ const commentService = {
     }
   },
 
-  getPostComments: async (postId) => {
+  getPostComments: async (postId, userId) => {
     const post = await prisma.post.findUnique({
       where: { id: parseInt(postId) }
     });
@@ -113,9 +113,13 @@ const commentService = {
       throw new NotFoundError("Post");
     }
 
-    return await prisma.comment.findMany({
+    const comments = await prisma.comment.findMany({
       where: { postId: parseInt(postId) },
-      include: {
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -123,12 +127,31 @@ const commentService = {
             username: true,
             avatar: true
           }
+        },
+        likes: userId ? {
+          where: {
+            userId: parseInt(userId)
+          },
+          take: 1
+        } : false,
+        _count: {
+          select: {
+            likes: true
+          }
         }
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
+
+    return comments.map(comment => ({
+      ...comment,
+      likesCount: comment._count.likes,
+      isLiked: userId ? comment.likes.length > 0 : false,
+      _count: undefined,
+      likes: undefined
+    }));
   }
 };
 

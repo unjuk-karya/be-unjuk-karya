@@ -1,4 +1,4 @@
-const likeService = require('../services/like.service');
+const likeService = require('../services/post-like.service');
 const { createSuccessResponse, createErrorResponse } = require('../../../utils/responseHandler');
 
 const likeController = {
