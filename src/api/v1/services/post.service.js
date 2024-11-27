@@ -162,15 +162,26 @@ const postService = {
         throw new NotFoundError("Post");
       }
 
+      const followStatus = await prisma.follow.findFirst({
+        where: {
+          AND: [
+            { followerId: parseInt(userId) },
+            { followingId: post.user.id }
+          ]
+        }
+      });
+   
       const { likes, favorites, _count, ...postData } = post;
-
+   
       return {
-        ...postData,
+        ...postData, 
+        isFollowing: followStatus ? true : false,
         isLiked: likes.length > 0,
         isFavorite: favorites.length > 0,
         likesCount: _count.likes,
         commentsCount: _count.comments
       };
+   
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
