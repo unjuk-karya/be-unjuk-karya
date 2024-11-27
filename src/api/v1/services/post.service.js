@@ -106,12 +106,13 @@ const postService = {
 
     try {
       await prisma.$transaction([
+        prisma.commentLike.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
         prisma.comment.deleteMany({ where: { postId: parseInt(id) } }),
-        prisma.like.deleteMany({ where: { postId: parseInt(id) } }),
+        prisma.postLike.deleteMany({ where: { postId: parseInt(id) } }), 
         prisma.favorite.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.post.delete({ where: { id: parseInt(id) } })
       ]);
-
+      
       if (existingPost.image) {
         await fs.unlink(existingPost.image)
           .catch(err => console.error('Error deleting image:', err));

@@ -41,14 +41,17 @@ const commentService = {
   },
 
   updateComment: async (data) => {
-    const { id, userId, content } = data;
+    const { id, userId, postId, content } = data;
 
     handleValidation({
       content: { value: content, message: "The comment content is required." }
     });
 
-    const existingComment = await prisma.comment.findUnique({
-      where: { id: parseInt(id) }
+    const existingComment = await prisma.comment.findFirst({
+      where: {
+        id: parseInt(id),
+        postId: parseInt(postId)
+      }
     });
 
     if (!existingComment) {
@@ -80,10 +83,13 @@ const commentService = {
   },
 
   deleteComment: async (data) => {
-    const { id, userId } = data;
+    const { id, userId, postId } = data;
 
-    const existingComment = await prisma.comment.findUnique({
-      where: { id: parseInt(id) }
+    const existingComment = await prisma.comment.findFirst({
+      where: {
+        id: parseInt(id),
+        postId: parseInt(postId)
+      }
     });
 
     if (!existingComment) {
@@ -95,9 +101,11 @@ const commentService = {
     }
 
     try {
-      await prisma.comment.delete({
-        where: { id: parseInt(id) }
-      });
+      await prisma.$transaction([
+        prisma.commentLike.deleteMany({ where: { commentId: parseInt(id) } }),
+        prisma.comment.delete({ where: { id: parseInt(id) } })
+      ]);
+
       return true;
     } catch (error) {
       throw new Error("Failed to delete comment");
