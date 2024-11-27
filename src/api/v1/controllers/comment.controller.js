@@ -25,7 +25,7 @@ const commentController = {
   deleteComment: async (req, res) => {
     try {
       const userId = req.user.id;
-      const { id, postId } = req.params; 
+      const { id, postId } = req.params;
 
       await commentService.deleteComment({ id, userId, postId });
       return res.json(
@@ -39,7 +39,7 @@ const commentController = {
   getPostComments: async (req, res) => {
     try {
       const { postId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user.id;
       const result = await commentService.getPostComments(postId, userId);
       return res.json(createSuccessResponse(result));
     } catch (error) {

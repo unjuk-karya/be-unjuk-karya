@@ -6,7 +6,7 @@ const commentLikeService = {
         const { postId, commentId, userId } = data;
 
         const comment = await prisma.comment.findFirst({
-            where: { 
+            where: {
                 id: parseInt(commentId),
                 postId: parseInt(postId)
             }

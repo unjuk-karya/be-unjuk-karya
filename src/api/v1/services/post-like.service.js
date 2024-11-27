@@ -46,8 +46,8 @@ const postLikeService = {
         }
 
         return await prisma.postLike.findMany({
-            where: { 
-                postId: parseInt(postId) 
+            where: {
+                postId: parseInt(postId)
             },
             include: {
                 user: {
