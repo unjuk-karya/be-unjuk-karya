@@ -3,7 +3,7 @@ const path = require('path');
 const { ValidationError } = require('../../../utils/responseHandler');
 
 const storage = multer.diskStorage({
- destination: './uploads/',
+ destination: './public/uploads/',
  filename: (req, file, cb) => {
    cb(null, `${Date.now()}-${file.originalname}`);
  }
