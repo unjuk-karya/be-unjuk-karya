@@ -7,7 +7,7 @@ const commentLikeController = {
             const userId = req.user.id;
             const { postId, commentId } = req.params;
             const result = await commentLikeService.toggleLike({ postId, commentId, userId });
-            
+
             return res.json(createSuccessResponse(result,
                 result.liked ? "Comment liked successfully" : "Comment unliked successfully"
             ));

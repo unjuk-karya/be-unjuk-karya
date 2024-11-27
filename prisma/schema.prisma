@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id           Int            @id @default(autoincrement())
-  email        String         @unique
+  id           Int                @id @default(autoincrement())
+  email        String             @unique
   password     String
   name         String
-  username     String         @unique
+  username     String             @unique
   phone        String?
   address      String?
   avatar       String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
   posts        Post[]
   comments     Comment[]
   postLikes    PostLike[]
   commentLikes CommentLike[]
-  replies      CommentReply[] // Add this
+  replyLikes   CommentReplyLike[] // Add this
+  replies      CommentReply[]
   favorites    Favorite[]
 
   @@map("users")
@@ -84,16 +85,29 @@ model CommentLike {
 }
 
 model CommentReply {
-  id        Int      @id @default(autoincrement())
+  id        Int                @id @default(autoincrement())
   content   String
   userId    Int
   commentId Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  comment   Comment  @relation(fields: [commentId], references: [id])
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  user      User               @relation(fields: [userId], references: [id])
+  comment   Comment            @relation(fields: [commentId], references: [id])
+  likes     CommentReplyLike[] // Add this
 
   @@map("comment_replies")
+}
+
+model CommentReplyLike {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  replyId   Int
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id])
+  reply     CommentReply @relation(fields: [replyId], references: [id])
+
+  @@unique([userId, replyId])
+  @@map("comment_reply_likes")
 }
 
 model Favorite {

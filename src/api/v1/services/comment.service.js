@@ -60,11 +60,11 @@ const commentService = {
 
     try {
       await prisma.$transaction([
-        prisma.commentReply.deleteMany({ where: { commentId: parseInt(id) } }), 
+        prisma.commentReplyLike.deleteMany({ where: { reply: { commentId: parseInt(id) } } }),
+        prisma.commentReply.deleteMany({ where: { commentId: parseInt(id) } }),
         prisma.commentLike.deleteMany({ where: { commentId: parseInt(id) } }),
         prisma.comment.delete({ where: { id: parseInt(id) } })
       ]);
-
       return true;
     } catch (error) {
       throw new Error("Failed to delete comment");
@@ -104,7 +104,7 @@ const commentService = {
         _count: {
           select: {
             likes: true,
-            replies: true 
+            replies: true
           }
         }
       },
@@ -116,7 +116,7 @@ const commentService = {
     return comments.map(comment => ({
       ...comment,
       likesCount: comment._count.likes,
-      repliesCount: comment._count.replies, 
+      repliesCount: comment._count.replies,
       isLiked: userId ? comment.likes.length > 0 : false,
       _count: undefined,
       likes: undefined
