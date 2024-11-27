@@ -22,11 +22,25 @@ model User {
   comments     Comment[]
   postLikes    PostLike[]
   commentLikes CommentLike[]
-  replyLikes   CommentReplyLike[] // Add this
+  replyLikes   CommentReplyLike[]
   replies      CommentReply[]
   favorites    Favorite[]
+  followers    Follow[]           @relation("Following")
+  following    Follow[]           @relation("Followers")
 
   @@map("users")
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
 }
 
 model Post {
@@ -93,7 +107,7 @@ model CommentReply {
   updatedAt DateTime           @updatedAt
   user      User               @relation(fields: [userId], references: [id])
   comment   Comment            @relation(fields: [commentId], references: [id])
-  likes     CommentReplyLike[] // Add this
+  likes     CommentReplyLike[]
 
   @@map("comment_replies")
 }

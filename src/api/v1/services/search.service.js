@@ -1,6 +1,6 @@
 const prisma = require('../../../config/prisma');
 
-const userService = {
+const searchService = {
   searchUsers: async (query) => {
     const users = await prisma.user.findMany({
       where: {
@@ -22,4 +22,4 @@ const userService = {
   }
 };
 
-module.exports = userService;
+module.exports = searchService;

@@ -4,14 +4,16 @@ const authRoutes = require('./auth.routes');
 const postRoutes = require('./post.routes');
 const commentRoutes = require('./comment.routes');
 const postLike = require('./post-like.routes');
-const userRoutes = require('./user.routes');
+const userRoutes = require('./search.routes');
 const favoriteRoutes = require('./favorite.routes');
 const commentLikeRoutes = require('./comment-like.routes');
 const replyRoutes = require('./reply.routes');
 const replyLikeRoutes = require('./reply-like.routes');
+const followRoutes = require('./follow.routes');
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
+router.use('/users', followRoutes);
 router.use('/posts', postRoutes);
 router.use('/posts/:postId/likes', postLike);
 router.use('/posts/:postId/comments', commentRoutes);

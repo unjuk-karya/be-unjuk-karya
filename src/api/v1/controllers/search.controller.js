@@ -1,7 +1,7 @@
-const userService = require('../services/user.service');
+const userService = require('../services/search.service');
 const { createSuccessResponse, createErrorResponse } = require('../../../utils/responseHandler');
 
-const userController = {
+const searchController = {
   searchUsers: async (req, res) => {
     try {
       const { q } = req.query;
@@ -18,4 +18,4 @@ const userController = {
   }
 };
 
-module.exports = userController;
+module.exports = searchController;
