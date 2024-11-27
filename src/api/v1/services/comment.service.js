@@ -40,48 +40,6 @@ const commentService = {
     }
   },
 
-  updateComment: async (data) => {
-    const { id, userId, postId, content } = data;
-
-    handleValidation({
-      content: { value: content, message: "The comment content is required." }
-    });
-
-    const existingComment = await prisma.comment.findFirst({
-      where: {
-        id: parseInt(id),
-        postId: parseInt(postId)
-      }
-    });
-
-    if (!existingComment) {
-      throw new NotFoundError("Comment");
-    }
-
-    if (existingComment.userId !== parseInt(userId)) {
-      throw new UnauthorizedError("You are not authorized to update this comment");
-    }
-
-    try {
-      return await prisma.comment.update({
-        where: { id: parseInt(id) },
-        data: { content },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true
-            }
-          }
-        }
-      });
-    } catch (error) {
-      throw new Error("Failed to update comment");
-    }
-  },
-
   deleteComment: async (data) => {
     const { id, userId, postId } = data;
 
@@ -102,6 +60,7 @@ const commentService = {
 
     try {
       await prisma.$transaction([
+        prisma.commentReply.deleteMany({ where: { commentId: parseInt(id) } }), 
         prisma.commentLike.deleteMany({ where: { commentId: parseInt(id) } }),
         prisma.comment.delete({ where: { id: parseInt(id) } })
       ]);
@@ -144,7 +103,8 @@ const commentService = {
         } : false,
         _count: {
           select: {
-            likes: true
+            likes: true,
+            replies: true 
           }
         }
       },
@@ -156,11 +116,11 @@ const commentService = {
     return comments.map(comment => ({
       ...comment,
       likesCount: comment._count.likes,
+      repliesCount: comment._count.replies, 
       isLiked: userId ? comment.likes.length > 0 : false,
       _count: undefined,
       likes: undefined
     }));
   }
 };
-
 module.exports = commentService;
