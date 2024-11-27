@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 
 const authService = {
   register: async (data) => {
-    const { email, username, password, confirmPassword, name, phone, address } = data;
+    const { email, username, password, confirmPassword, name, phone, address, bio } = data;
 
     handleValidation({
       email: { value: email, message: "The email field is required." },
@@ -45,7 +45,8 @@ const authService = {
           password: await bcrypt.hash(password, 10),
           name,
           phone,
-          address
+          address,
+          bio
         },
         select: {
           id: true,
@@ -53,7 +54,8 @@ const authService = {
           username: true,
           name: true,
           phone: true,
-          address: true
+          address: true,
+          bio: true,
         }
       });
 
@@ -103,6 +105,7 @@ const authService = {
         phone: user.phone,
         address: user.address,
         avatar: user.avatar,
+        bio: user.bio,
         token
       };
     } catch (error) {
