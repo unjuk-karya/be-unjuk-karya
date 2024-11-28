@@ -170,18 +170,18 @@ const postService = {
           ]
         }
       });
-   
+
       const { likes, favorites, _count, ...postData } = post;
-   
+
       return {
-        ...postData, 
+        ...postData,
         isFollowing: followStatus ? true : false,
         isLiked: likes.length > 0,
         isFavorite: favorites.length > 0,
         likesCount: _count.likes,
         commentsCount: _count.comments
       };
-   
+
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
@@ -189,6 +189,138 @@ const postService = {
       throw new Error("Failed to get post");
     }
   },
-};
+  getAllPosts: async (userId) => {
+    try {
+      const posts = await prisma.post.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true
+            }
+          },
+          likes: {
+            where: {
+              userId: parseInt(userId)
+            }
+          },
+          favorites: {
+            where: {
+              userId: parseInt(userId)
+            }
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      const postsWithFollow = await Promise.all(
+        posts.map(async (post) => {
+          const followStatus = await prisma.follow.findFirst({
+            where: {
+              AND: [
+                { followerId: parseInt(userId) },
+                { followingId: post.user.id }
+              ]
+            }
+          });
+
+          const { likes, favorites, _count, ...postData } = post;
+          return {
+            ...postData,
+            isFollowing: followStatus ? true : false,
+            isLiked: likes.length > 0,
+            isFavorite: favorites.length > 0,
+            likesCount: _count.likes,
+            commentsCount: _count.comments
+          };
+        })
+      );
+
+      return postsWithFollow;
+    } catch (error) {
+      throw new Error("Failed to get all posts");
+    }
+  },
+
+  getFollowingPosts: async (userId) => {
+    try {
+      const posts = await prisma.post.findMany({
+        where: {
+          user: {
+            following: {
+              some: {
+                followerId: parseInt(userId),
+              },
+            },
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true,
+            },
+          },
+          likes: {
+            where: {
+              userId: parseInt(userId),
+            },
+          },
+          favorites: {
+            where: {
+              userId: parseInt(userId),
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              likes: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const postsWithDetails = await Promise.all(
+        posts.map(async (post) => {
+          const followStatus = await prisma.follow.findFirst({
+            where: {
+              followerId: parseInt(userId),
+              followingId: post.user.id,
+            },
+          });
+
+          const { likes, favorites, _count, ...postData } = post;
+          return {
+            ...postData,
+            isFollowing: !!followStatus,
+            isLiked: likes.length > 0,
+            isFavorite: favorites.length > 0,
+            likesCount: _count.likes,
+            commentsCount: _count.comments,
+          };
+        })
+      );
+
+      return postsWithDetails;
+    } catch (error) {
+      throw new Error("Failed to get following posts");
+    }
+  }
+}
 
 module.exports = postService;

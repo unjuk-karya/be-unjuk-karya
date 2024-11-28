@@ -81,6 +81,24 @@ const postController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+  getAllPosts: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const result = await postService.getAllPosts(userId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
+  getFollowingPosts: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const result = await postService.getFollowingPosts(userId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 

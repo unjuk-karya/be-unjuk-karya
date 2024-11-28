@@ -7,6 +7,8 @@ const upload = require('../middlewares/upload.middleware');
 router.post('/', authMiddleware, upload.single('image'), postController.createPost);
 router.put('/:id', authMiddleware, upload.single('image'), postController.updatePost);
 router.delete('/:id', authMiddleware, postController.deletePost);
+router.get('/', authMiddleware, postController.getAllPosts);
+router.get('/feed', authMiddleware, postController.getFollowingPosts);
 router.get('/:id',authMiddleware, postController.getPostById);
 
 module.exports = router;
