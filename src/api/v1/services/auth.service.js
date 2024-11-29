@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const authService = {
   register: async (data) => {
     const { email, username, password, confirmPassword, name, phone, address, bio } = data;
-
+  
     handleValidation({
       email: { value: email, message: "The email field is required." },
       username: { value: username, message: "The username field is required." },
@@ -14,29 +14,30 @@ const authService = {
       confirmPassword: { value: confirmPassword, message: "The confirm password field is required." },
       name: { value: name, message: "The name field is required." }
     });
-
+  
     if (password !== confirmPassword) {
       throw new ValidationError({
         password: ["The password and confirm password do not match."],
         confirmPassword: ["The password and confirm password do not match."]
       });
     }
-
-    const existingUserEmail = await prisma.user.findUnique({ where: { email } });
-    const existingUserUsername = await prisma.user.findUnique({ where: { username } });
-
+  
+    const [existingUserEmail, existingUserUsername] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.user.findUnique({ where: { username } })
+    ]);
+  
+    const errors = {};
     if (existingUserEmail) {
-      throw new ValidationError({
-        email: ["The email has already been taken."]
-      });
+      errors.email = ["The email has already been taken."];
     }
-
     if (existingUserUsername) {
-      throw new ValidationError({
-        username: ["The username has already been taken."]
-      });
+      errors.username = ["The username has already been taken."];
     }
-
+    if (Object.keys(errors).length > 0) {
+      throw new ValidationError(errors);
+    }
+  
     try {
       const user = await prisma.user.create({
         data: {
@@ -58,7 +59,7 @@ const authService = {
           bio: true,
         }
       });
-
+  
       return user;
     } catch (error) {
       throw new Error("Failed to register user");
