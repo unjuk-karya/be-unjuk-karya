@@ -5,14 +5,13 @@ const bcrypt = require('bcryptjs');
 
 const authService = {
   register: async (data) => {
-    const { email, username, password, confirmPassword, name, phone, address, bio } = data;
+    const { email, username, password, confirmPassword } = data;
   
     handleValidation({
       email: { value: email, message: "The email field is required." },
       username: { value: username, message: "The username field is required." },
       password: { value: password, message: "The password field is required." },
       confirmPassword: { value: confirmPassword, message: "The confirm password field is required." },
-      name: { value: name, message: "The name field is required." }
     });
   
     if (password !== confirmPassword) {
@@ -43,11 +42,7 @@ const authService = {
         data: {
           email,
           username,
-          password: await bcrypt.hash(password, 10),
-          name,
-          phone,
-          address,
-          bio
+          password: await bcrypt.hash(password, 10)
         },
         select: {
           id: true,
