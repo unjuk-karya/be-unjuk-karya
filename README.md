@@ -1,6 +1,6 @@
-# be-ruang-seni
+# BE UnujukKarya
 
-This is the backend for the Ruang Seni application.
+This is the backend for the Unjuk Karya.
 
 ## Getting Started
 
@@ -14,20 +14,24 @@ This is the backend for the Ruang Seni application.
 1. Clone the repository:
     ```sh
     git clone https://github.com/ruang-seni/be-ruang-seni.git
+    ```
+
+2. Change to the project directory:
+    ```sh
     cd be-ruang-seni
     ```
 
-2. Copy the example environment file and configure it:
+3. Copy the example environment file and configure it:
     ```sh
     copy .env.example .env
     ```
 
-3. Install the dependencies:
+4. Install the dependencies:
     ```sh
     npm install
     ```
 
-4. Start the development server:
+5. Start the development server:
     ```sh
     npm run dev
     ```
