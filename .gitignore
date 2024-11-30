@@ -85,4 +85,6 @@ Thumbs.db
 # Prisma
 prisma/migrations/
 
-public/uploads/
+env.yaml
+
+service-account.json

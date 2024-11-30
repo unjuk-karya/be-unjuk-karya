@@ -1,6 +1,6 @@
 const { handleValidation, NotFoundError, UnauthorizedError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
-const fs = require('fs').promises;
+const bucket = require('../../../config/gcs');
 
 const postService = {
   createPost: async (data) => {
@@ -58,11 +58,15 @@ const postService = {
 
     try {
       if (image && existingPost.image) {
-        await fs.unlink(existingPost.image)
-          .catch(err => console.error('Error deleting old image:', err));
+        const oldImageName = existingPost.image.split('/').pop();
+        try {
+          await bucket.file(`posts/${oldImageName}`).delete();
+        } catch (err) {
+          throw new Error("Failed to delete old image");
+        }
       }
 
-      return await prisma.post.update({
+      const updatedPost = await prisma.post.update({
         where: { id: parseInt(id) },
         data: {
           title,
@@ -80,12 +84,19 @@ const postService = {
           }
         }
       });
+
+      return updatedPost;
+
     } catch (error) {
       if (image) {
-        await fs.unlink(image)
-          .catch(err => console.error('Error deleting new image:', err));
+        const newImageName = image.split('/').pop();
+        try {
+          await bucket.file(`posts/${newImageName}`).delete();
+        } catch (deleteErr) {
+          throw new Error("Failed to delete new image after update error");
+        }
       }
-      throw new Error("Failed to update post");
+      throw error;
     }
   },
 
@@ -105,6 +116,15 @@ const postService = {
     }
 
     try {
+      if (existingPost.image) {
+        const imageName = existingPost.image.split('/').pop();
+        try {
+          await bucket.file(`posts/${imageName}`).delete();
+        } catch (err) {
+          throw new Error("Failed to delete image");
+        }
+      }
+
       await prisma.$transaction([
         prisma.commentReplyLike.deleteMany({ where: { reply: { comment: { postId: parseInt(id) } } } }),
         prisma.commentReply.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
@@ -114,11 +134,6 @@ const postService = {
         prisma.favorite.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.post.delete({ where: { id: parseInt(id) } })
       ]);
-
-      if (existingPost.image) {
-        await fs.unlink(existingPost.image)
-          .catch(err => console.error('Error deleting image:', err));
-      }
 
       return true;
     } catch (error) {
@@ -189,6 +204,7 @@ const postService = {
       throw new Error("Failed to get post");
     }
   },
+  
   getAllPosts: async (userId) => {
     try {
       const posts = await prisma.post.findMany({

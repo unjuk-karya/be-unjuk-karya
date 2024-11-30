@@ -1,66 +1,66 @@
 const postService = require('../services/post.service');
 const { createSuccessResponse, createErrorResponse } = require('../../../utils/responseHandler');
-const fs = require('fs').promises;
+const bucket = require('../../../config/gcs');
 
 const postController = {
   createPost: async (req, res) => {
     try {
       const userId = req.user.id;
       const { title, content } = req.body;
-      const image = req.file?.path;
+      const image = req.file?.cloudStoragePublicUrl;
 
-      try {
-        const result = await postService.createPost({
-          userId,
-          title,
-          content,
-          image
-        });
+      const result = await postService.createPost({
+        userId,
+        title,
+        content,
+        image,
+      });
 
-        return res.status(201).json(
-          createSuccessResponse(result, "Post created successfully", 201)
-        );
-      } catch (error) {
-        if (image) {
-          await fs.unlink(image)
-            .catch(err => console.error('Error deleting file:', err));
-        }
-        throw error;
-      }
+      return res.status(201).json(
+        createSuccessResponse(result, 'Post created successfully', 201)
+      );
     } catch (error) {
+      if (req.file?.cloudStoragePublicUrl) {
+        try {
+          const imagePath = new URL(req.file.cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
+          await bucket.file(imagePath).delete();
+        } catch (err) {
+        }
+      }
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   updatePost: async (req, res) => {
     try {
       const userId = req.user.id;
       const { id } = req.params;
       const { title, content } = req.body;
-      const image = req.file?.path;
+      const image = req.file?.cloudStoragePublicUrl;
 
-      try {
-        const result = await postService.updatePost({
-          id,
-          userId,
-          title,
-          content,
-          image
-        });
+      const result = await postService.updatePost({
+        id,
+        userId,
+        title,
+        content,
+        image
+      });
 
-        return res.json(
-          createSuccessResponse(result, "Post updated successfully")
-        );
-      } catch (error) {
-        if (image) {
-          await fs.unlink(image)
-            .catch(err => console.error('Error deleting file:', err));
-        }
-        throw error;
-      }
+      return res.json(
+        createSuccessResponse(result, "Post updated successfully")
+      );
     } catch (error) {
+      if (req.file?.cloudStoragePublicUrl) {
+        try {
+          const imagePath = new URL(req.file.cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
+          await bucket.file(imagePath).delete();
+        } catch (err) {
+        }
+      }
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   deletePost: async (req, res) => {
     try {
       const userId = req.user.id;
@@ -72,6 +72,7 @@ const postController = {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   getPostById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -82,6 +83,7 @@ const postController = {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   getAllPosts: async (req, res) => {
     try {
       const userId = req.user.id;
@@ -91,6 +93,7 @@ const postController = {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
   getFollowingPosts: async (req, res) => {
     try {
       const userId = req.user.id;

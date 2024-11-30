@@ -4,6 +4,6 @@ const profileController = require('../controllers/profile.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 const createUpload = require('../middlewares/upload.middleware');
 
-router.put('/profile', authMiddleware, createUpload('./public/uploads/avatars/').single('avatar'), profileController.updateProfile);
+router.put('/profile', authMiddleware, ...createUpload('avatar', 'avatars/'), profileController.updateProfile);
 
 module.exports = router;

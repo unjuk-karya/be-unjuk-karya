@@ -1,6 +1,6 @@
 const { NotFoundError, ValidationError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
-const fs = require('fs').promises;
+const bucket = require('../../../config/gcs');
 
 const profileService = {
     updateProfile: async (data) => {
@@ -47,8 +47,12 @@ const profileService = {
           if (avatar) {
             updateData.avatar = avatar;
             if (existingUser.avatar) {
-              await fs.unlink(existingUser.avatar)
-                .catch(err => console.error('Error deleting old avatar:', err));
+                const oldAvatarName = existingUser.avatar.split('/').pop();
+                try {
+                    await bucket.file(`avatars/${oldAvatarName}`).delete();
+                } catch (err) {
+                    throw new Error("Failed to delete old avatar");
+                }
             }
           }
     
@@ -72,9 +76,17 @@ const profileService = {
           return updatedUser;
     
         } catch (error) {
-          throw new Error("Failed to update profile");
+          if (avatar) {
+            const newAvatarName = avatar.split('/').pop();
+            try {
+                await bucket.file(`avatars/${newAvatarName}`).delete();
+            } catch (deleteErr) {
+                throw new Error("Failed to delete new avatar after update error");
+            }
+          }
+          throw error;
         }
-      },
+    },
 };
 
 module.exports = profileService;

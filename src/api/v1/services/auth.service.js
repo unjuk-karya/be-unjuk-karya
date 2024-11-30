@@ -89,10 +89,8 @@ const authService = {
     try {
       const token = jwt.sign(
         { id: user.id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
+        process.env.JWT_SECRET
       );
-
       return {
         id: user.id,
         email: user.email,
