@@ -104,6 +104,59 @@ const profileService = {
         throw error;
       }
   },
+
+  getUserProfile: async (userId, currentUserId) => { 
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        username: true,
+        phone: true,
+        address: true,
+        avatar: true,
+        coverPhoto: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            following: true,
+            followers: true,
+            posts: true,
+          }
+        }
+      }
+    });
+  
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+  
+    let isFollowing = false;
+    const isMyself = parseInt(userId) === parseInt(currentUserId);
+    
+    if (!isMyself) {
+      const followStatus = await prisma.follow.findFirst({
+        where: {
+          followerId: parseInt(currentUserId),
+          followingId: parseInt(userId)
+        }
+      });
+      isFollowing = !!followStatus;
+    }
+  
+    return {
+      ...user,
+      isMyself,             
+      isFollowing,             
+      followingCount: user._count.following,
+      followersCount: user._count.followers,
+      postsCount: user._count.posts,
+      _count: undefined 
+    }
+  }
 };
 
 module.exports = profileService;

@@ -177,20 +177,22 @@ const postService = {
         throw new NotFoundError("Post");
       }
 
-      const followStatus = await prisma.follow.findFirst({
+      const isMyself = post.user.id === parseInt(userId);
+      const followStatus = !isMyself ? await prisma.follow.findFirst({
         where: {
           AND: [
-            { followerId: parseInt(userId) },
-            { followingId: post.user.id }
+            { followerId: parseInt(userId) },       
+            { followingId: post.user.id }          
           ]
         }
-      });
+      }) : null;
 
       const { likes, favorites, _count, ...postData } = post;
 
       return {
         ...postData,
-        isFollowing: followStatus ? true : false,
+        isMyself,
+        isFollowing: !!followStatus,  
         isLiked: likes.length > 0,
         isFavorite: favorites.length > 0,
         likesCount: _count.likes,
@@ -241,19 +243,21 @@ const postService = {
 
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {
-          const followStatus = await prisma.follow.findFirst({
+          const isMyself = post.user.id === parseInt(userId);
+          const followStatus = !isMyself ? await prisma.follow.findFirst({
             where: {
               AND: [
-                { followerId: parseInt(userId) },
-                { followingId: post.user.id }
+                { followerId: parseInt(userId) },       
+                { followingId: post.user.id }           
               ]
             }
-          });
+          }) : null;
 
           const { likes, favorites, _count, ...postData } = post;
           return {
             ...postData,
-            isFollowing: followStatus ? true : false,
+            isMyself,
+            isFollowing: !!followStatus, 
             isLiked: likes.length > 0,
             isFavorite: favorites.length > 0,
             likesCount: _count.likes,
@@ -273,7 +277,7 @@ const postService = {
       const posts = await prisma.post.findMany({
         where: {
           user: {
-            following: {
+            followers: {              
               some: {
                 followerId: parseInt(userId),
               },
@@ -311,26 +315,20 @@ const postService = {
         },
       });
 
-      const postsWithDetails = await Promise.all(
-        posts.map(async (post) => {
-          const followStatus = await prisma.follow.findFirst({
-            where: {
-              followerId: parseInt(userId),
-              followingId: post.user.id,
-            },
-          });
-
-          const { likes, favorites, _count, ...postData } = post;
-          return {
-            ...postData,
-            isFollowing: !!followStatus,
-            isLiked: likes.length > 0,
-            isFavorite: favorites.length > 0,
-            likesCount: _count.likes,
-            commentsCount: _count.comments,
-          };
-        })
-      );
+      const postsWithDetails = posts.map((post) => {
+        const { likes, favorites, _count, ...postData } = post;
+        const isMyself = post.user.id === parseInt(userId);
+        
+        return {
+          ...postData,
+          isMyself,
+          isFollowing: true,
+          isLiked: likes.length > 0,
+          isFavorite: favorites.length > 0,
+          likesCount: _count.likes,
+          commentsCount: _count.comments,
+        };
+      });
 
       return postsWithDetails;
     } catch (error) {

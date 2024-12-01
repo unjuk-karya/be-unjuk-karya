@@ -27,19 +27,22 @@ model User {
   replyLikes   CommentReplyLike[]
   replies      CommentReply[]
   favorites    Favorite[]
-  followers    Follow[]           @relation("Following")
-  following    Follow[]           @relation("Followers")
+  // User yang follow saya (my followers)
+  followers    Follow[]           @relation("Followers")
+  // User yang saya follow (users I follow)
+  following    Follow[]           @relation("Following")
 
   @@map("users")
 }
 
 model Follow {
   id          Int      @id @default(autoincrement())
-  followerId  Int
-  followingId Int
+  followerId  Int      // ID user yang melakukan follow
+  followingId Int      // ID user yang di-follow
   createdAt   DateTime @default(now())
-  follower    User     @relation("Following", fields: [followerId], references: [id])
-  following   User     @relation("Followers", fields: [followingId], references: [id])
+  
+  follower    User     @relation("Following", fields: [followerId], references: [id])  // User yang melakukan follow
+  following   User     @relation("Followers", fields: [followingId], references: [id]) // User yang di-follow
 
   @@unique([followerId, followingId])
   @@map("follows")

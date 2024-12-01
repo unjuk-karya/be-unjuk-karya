@@ -14,4 +14,6 @@ router.put(
   profileController.updateProfile
 );
 
+router.get('/profile/:userId', authMiddleware, profileController.getUserProfile);
+
 module.exports = router;

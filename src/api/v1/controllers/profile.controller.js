@@ -40,6 +40,17 @@ const profileController = {
       }
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+  getUserProfile: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      
+      const result = await profileService.getUserProfile(userId, currentUserId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 
