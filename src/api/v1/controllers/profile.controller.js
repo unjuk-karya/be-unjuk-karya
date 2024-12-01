@@ -7,7 +7,8 @@ const profileController = {
     try {
       const userId = req.user.id;
       const { name, email, username, phone, address, bio } = req.body;
-      const avatar = req.file?.cloudStoragePublicUrl;
+      const avatar = req.files?.avatar?.[0]?.cloudStoragePublicUrl;
+      const coverPhoto = req.files?.coverPhoto?.[0]?.cloudStoragePublicUrl;
 
       const result = await profileService.updateProfile({
         id: userId,
@@ -17,20 +18,25 @@ const profileController = {
         phone,
         address,
         bio,
-        avatar
+        avatar,
+        coverPhoto
       });
 
       return res.json(
         createSuccessResponse(result, "Profile updated successfully")
       );
     } catch (error) {
-      if (req.file?.cloudStoragePublicUrl) {
+      if (req.files?.avatar?.[0]?.cloudStoragePublicUrl) {
         try {
-          const imagePath = new URL(req.file.cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
+          const imagePath = new URL(req.files.avatar[0].cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
           await bucket.file(imagePath).delete();
-        } catch (err) {
-          
-        }
+        } catch (err) {}
+      }
+      if (req.files?.coverPhoto?.[0]?.cloudStoragePublicUrl) {
+        try {
+          const imagePath = new URL(req.files.coverPhoto[0].cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
+          await bucket.file(imagePath).delete();
+        } catch (err) {}
       }
       return res.status(error.status || 500).json(createErrorResponse(error));
     }

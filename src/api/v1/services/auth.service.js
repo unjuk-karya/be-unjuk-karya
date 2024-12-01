@@ -52,6 +52,8 @@ const authService = {
           phone: true,
           address: true,
           bio: true,
+          avatar: true,
+          coverPhoto: true
         }
       });
   
@@ -100,6 +102,7 @@ const authService = {
         address: user.address,
         avatar: user.avatar,
         bio: user.bio,
+        coverPhoto: user.coverPhoto,
         token
       };
     } catch (error) {
