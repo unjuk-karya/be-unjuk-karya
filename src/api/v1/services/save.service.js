@@ -1,8 +1,8 @@
 const { NotFoundError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
 
-const favoriteService = {
-    toggleFavorite: async (data) => {
+const saveService = {
+    toggleSave: async (data) => {
         const { postId, userId } = data;
 
         const post = await prisma.post.findUnique({
@@ -13,29 +13,28 @@ const favoriteService = {
             throw new NotFoundError("Post");
         }
 
-        const existingFavorite = await prisma.favorite.findFirst({
+        const existingSave = await prisma.save.findFirst({
             where: {
                 postId: parseInt(postId),
                 userId: parseInt(userId)
             }
         });
 
-        if (existingFavorite) {
-            await prisma.favorite.delete({
-                where: { id: existingFavorite.id }
+        if (existingSave) {
+            await prisma.save.delete({
+                where: { id: existingSave.id }
             });
-            return { favorited: false };
+            return { saved: false };
         }
 
-        await prisma.favorite.create({
+        await prisma.save.create({
             data: {
                 postId: parseInt(postId),
                 userId: parseInt(userId)
             }
         });
-
-        return { favorited: true };
+        return { saved: true };
     }
 };
 
-module.exports = favoriteService;
+module.exports = saveService;

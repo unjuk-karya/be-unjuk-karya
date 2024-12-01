@@ -5,7 +5,7 @@ const postRoutes = require('./post.routes');
 const commentRoutes = require('./comment.routes');
 const postLike = require('./post-like.routes');
 const searchRoutes = require('./search.routes');
-const favoriteRoutes = require('./favorite.routes');
+const saveRoute = require('./save.routes');
 const commentLikeRoutes = require('./comment-like.routes');
 const replyRoutes = require('./reply.routes');
 const replyLikeRoutes = require('./reply-like.routes');
@@ -22,7 +22,7 @@ router.use('/posts/:postId/comments', commentRoutes);
 router.use('/posts/:postId/comments/:commentId/likes', commentLikeRoutes);
 router.use('/posts/:postId/comments/:commentId/replies', replyRoutes);
 router.use('/posts/:postId/comments/:commentId/replies/:replyId/likes', replyLikeRoutes);
-router.use('/posts/:postId/favorites', favoriteRoutes);
+router.use('/posts/:postId/saves', saveRoute);
 
 
 module.exports = router;

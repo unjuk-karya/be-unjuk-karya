@@ -131,7 +131,7 @@ const postService = {
         prisma.commentLike.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
         prisma.comment.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.postLike.deleteMany({ where: { postId: parseInt(id) } }),
-        prisma.favorite.deleteMany({ where: { postId: parseInt(id) } }),
+        prisma.save.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.post.delete({ where: { id: parseInt(id) } })
       ]);
 
@@ -159,7 +159,7 @@ const postService = {
               userId: parseInt(userId)
             }
           },
-          favorites: {
+          saves: {
             where: {
               userId: parseInt(userId)
             }
@@ -187,14 +187,14 @@ const postService = {
         }
       }) : null;
 
-      const { likes, favorites, _count, ...postData } = post;
+      const { likes, saves, _count, ...postData } = post;
 
       return {
         ...postData,
         isMyself,
         isFollowing: !!followStatus,  
         isLiked: likes.length > 0,
-        isFavorite: favorites.length > 0,
+        isSaved: saves.length > 0,
         likesCount: _count.likes,
         commentsCount: _count.comments
       };
@@ -224,7 +224,7 @@ const postService = {
               userId: parseInt(userId)
             }
           },
-          favorites: {
+          saves: {
             where: {
               userId: parseInt(userId)
             }
@@ -253,13 +253,13 @@ const postService = {
             }
           }) : null;
 
-          const { likes, favorites, _count, ...postData } = post;
+          const { likes, saves, _count, ...postData } = post;
           return {
             ...postData,
             isMyself,
             isFollowing: !!followStatus, 
             isLiked: likes.length > 0,
-            isFavorite: favorites.length > 0,
+            isSaved: saves.length > 0,
             likesCount: _count.likes,
             commentsCount: _count.comments
           };
@@ -298,7 +298,7 @@ const postService = {
               userId: parseInt(userId),
             },
           },
-          favorites: {
+          saves: {
             where: {
               userId: parseInt(userId),
             },
@@ -316,7 +316,7 @@ const postService = {
       });
 
       const postsWithDetails = posts.map((post) => {
-        const { likes, favorites, _count, ...postData } = post;
+        const { likes, saves, _count, ...postData } = post;
         const isMyself = post.user.id === parseInt(userId);
         
         return {
@@ -324,7 +324,7 @@ const postService = {
           isMyself,
           isFollowing: true,
           isLiked: likes.length > 0,
-          isFavorite: favorites.length > 0,
+          isSaved: saves.length > 0,
           likesCount: _count.likes,
           commentsCount: _count.comments,
         };
