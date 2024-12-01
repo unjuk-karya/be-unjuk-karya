@@ -41,8 +41,16 @@ const followService = {
     return { following: true };
   },
 
-  getFollowers: async (userId) => {
-    return await prisma.follow.findMany({
+  getFollowers: async (userId, currentUserId) => {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+
+    const followers = await prisma.follow.findMany({
       where: { followingId: parseInt(userId) },
       include: {
         follower: {
@@ -58,10 +66,47 @@ const followService = {
         createdAt: 'desc'
       }
     });
+
+    const followersWithDetails = await Promise.all(
+      followers.map(async (follow) => {
+        const isMyself = follow.follower.id === parseInt(currentUserId);
+        
+        let isFollowing = false;
+        if (!isMyself) {
+          const followStatus = await prisma.follow.findFirst({
+            where: {
+              followerId: parseInt(currentUserId),
+              followingId: follow.follower.id
+            }
+          });
+          isFollowing = !!followStatus;
+        }
+
+        return {
+          id: follow.id,
+          user: {
+            ...follow.follower,
+            isMyself,
+            isFollowing
+          },
+          createdAt: follow.createdAt
+        };
+      })
+    );
+
+    return followersWithDetails;
   },
 
-  getFollowing: async (userId) => {
-    return await prisma.follow.findMany({
+  getFollowing: async (userId, currentUserId) => {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+
+    const following = await prisma.follow.findMany({
       where: { followerId: parseInt(userId) },
       include: {
         following: {
@@ -77,6 +122,35 @@ const followService = {
         createdAt: 'desc'
       }
     });
+
+    const followingWithDetails = await Promise.all(
+      following.map(async (follow) => {
+        const isMyself = follow.following.id === parseInt(currentUserId);
+        
+        let isFollowing = false;
+        if (!isMyself) {
+          const followStatus = await prisma.follow.findFirst({
+            where: {
+              followerId: parseInt(currentUserId),
+              followingId: follow.following.id
+            }
+          });
+          isFollowing = !!followStatus;
+        }
+
+        return {
+          id: follow.id,
+          user: {
+            ...follow.following,
+            isMyself,
+            isFollowing
+          },
+          createdAt: follow.createdAt
+        };
+      })
+    );
+
+    return followingWithDetails;
   }
 };
 

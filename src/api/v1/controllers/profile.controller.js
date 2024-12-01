@@ -51,6 +51,41 @@ const profileController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+  getUserPosts: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      
+      const result = await profileService.getUserPosts(userId, currentUserId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
+
+  getUserLikedPosts: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      
+      const result = await profileService.getUserLikedPosts(userId, currentUserId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
+
+  getUserSavedPosts: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      
+      const result = await profileService.getUserSavedPosts(userId, currentUserId);
+      return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 

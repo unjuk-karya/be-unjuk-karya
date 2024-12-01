@@ -13,7 +13,9 @@ router.put(
   ]), 
   profileController.updateProfile
 );
-
 router.get('/:userId/profile', authMiddleware, profileController.getUserProfile);
+router.get('/:userId/posts', authMiddleware, profileController.getUserPosts);
+router.get('/:userId/liked-posts', authMiddleware, profileController.getUserLikedPosts);
+router.get('/:userId/saved-posts', authMiddleware, profileController.getUserSavedPosts);
 
 module.exports = router;

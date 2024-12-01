@@ -22,8 +22,9 @@ const followController = {
 
   getFollowers: async (req, res) => {
     try {
-      const { userId } = req.params;
-      const result = await followService.getFollowers(userId);
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      const result = await followService.getFollowers(userId, currentUserId);
       return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
@@ -32,8 +33,9 @@ const followController = {
 
   getFollowing: async (req, res) => {
     try {
-      const { userId } = req.params;
-      const result = await followService.getFollowing(userId);
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      const result = await followService.getFollowing(userId, currentUserId);
       return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
