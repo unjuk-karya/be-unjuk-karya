@@ -207,8 +207,10 @@ const postService = {
     }
   },
   
-  getAllPosts: async (userId) => {
+  getAllPosts: async (userId, page = 1, pageSize = 10) => {
     try {
+      const skip = (page - 1) * pageSize;
+  
       const posts = await prisma.post.findMany({
         include: {
           user: {
@@ -236,28 +238,34 @@ const postService = {
             }
           }
         },
+        skip,
+        take: pageSize,
         orderBy: {
           createdAt: 'desc'
         }
       });
-
+  
+      const totalPosts = await prisma.post.count(); // Hitung jumlah total post
+  
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {
           const isMyself = post.user.id === parseInt(userId);
-          const followStatus = !isMyself ? await prisma.follow.findFirst({
-            where: {
-              AND: [
-                { followerId: parseInt(userId) },       
-                { followingId: post.user.id }           
-              ]
-            }
-          }) : null;
-
+          const followStatus = !isMyself
+            ? await prisma.follow.findFirst({
+                where: {
+                  AND: [
+                    { followerId: parseInt(userId) },
+                    { followingId: post.user.id }
+                  ]
+                }
+              })
+            : null;
+  
           const { likes, saves, _count, ...postData } = post;
           return {
             ...postData,
             isMyself,
-            isFollowing: !!followStatus, 
+            isFollowing: !!followStatus,
             isLiked: likes.length > 0,
             isSaved: saves.length > 0,
             likesCount: _count.likes,
@@ -265,13 +273,21 @@ const postService = {
           };
         })
       );
-
-      return postsWithFollow;
+  
+      return {
+        posts: postsWithFollow,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          totalPosts,
+          totalPages: Math.ceil(totalPosts / pageSize)
+        }
+      };
     } catch (error) {
       throw new Error("Failed to get all posts");
     }
   },
-
+  
   getFollowingPosts: async (userId) => {
     try {
       const posts = await prisma.post.findMany({

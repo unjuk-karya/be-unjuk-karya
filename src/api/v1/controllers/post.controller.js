@@ -87,8 +87,12 @@ const postController = {
   getAllPosts: async (req, res) => {
     try {
       const userId = req.user.id;
-      const result = await postService.getAllPosts(userId);
-      return res.json(createSuccessResponse(result));
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+  
+      const result = await postService.getAllPosts(userId, page, pageSize);
+  
+      return res.json(createSuccessResponse(result, "Posts fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }

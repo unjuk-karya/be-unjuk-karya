@@ -39,13 +39,17 @@ const commentController = {
   getPostComments: async (req, res) => {
     try {
       const { postId } = req.params;
-      const userId = req.user.id;
-      const result = await commentService.getPostComments(postId, userId);
+      const userId = req.user.id; 
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 5;
+  
+      const result = await commentService.getPostComments(postId, userId, page, pageSize);
       return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   }
+  
 };
 
 module.exports = commentController;
