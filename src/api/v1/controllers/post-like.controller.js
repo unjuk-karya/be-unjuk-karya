@@ -19,7 +19,8 @@ const likeController = {
     getPostLikes: async (req, res) => {
         try {
             const { postId } = req.params;
-            const result = await likeService.getPostLikes(postId);
+            const currentUserId = req.user.id; 
+            const result = await likeService.getPostLikes(postId, currentUserId);
             return res.json(createSuccessResponse(result));
         } catch (error) {
             return res.status(error.status || 500).json(createErrorResponse(error));

@@ -36,16 +36,16 @@ const postLikeService = {
         return { liked: true };
     },
 
-    getPostLikes: async (postId) => {
+    getPostLikes: async (postId, currentUserId) => {
         const post = await prisma.post.findUnique({
             where: { id: parseInt(postId) }
         });
-
+    
         if (!post) {
             throw new NotFoundError("Post");
         }
-
-        return await prisma.postLike.findMany({
+    
+        const postLikes = await prisma.postLike.findMany({
             where: {
                 postId: parseInt(postId)
             },
@@ -63,6 +63,35 @@ const postLikeService = {
                 createdAt: 'desc'
             }
         });
+    
+        const postLikesWithDetails = await Promise.all(
+            postLikes.map(async (like) => {
+                const isMyself = like.user.id === parseInt(currentUserId);
+    
+                let isFollowing = false;
+                if (!isMyself) {
+                    const followStatus = await prisma.follow.findFirst({
+                        where: {
+                            followerId: parseInt(currentUserId),
+                            followingId: like.user.id
+                        }
+                    });
+                    isFollowing = !!followStatus;
+                }
+    
+                return {
+                    id: like.id,
+                    user: {
+                        ...like.user,
+                        isMyself,
+                        isFollowing
+                    },
+                    createdAt: like.createdAt
+                };
+            })
+        );
+    
+        return postLikesWithDetails;
     }
 };
 
