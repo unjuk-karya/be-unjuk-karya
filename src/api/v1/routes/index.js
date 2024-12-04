@@ -11,6 +11,7 @@ const replyRoutes = require('./reply.routes');
 const replyLikeRoutes = require('./reply-like.routes');
 const followRoutes = require('./follow.routes');
 const profileRoutes = require('./profile.routes');
+const productRoutes = require('./product.routes');
 
 router.use('/auth', authRoutes);
 router.use('/users', searchRoutes);
@@ -24,5 +25,6 @@ router.use('/posts/:postId/comments/:commentId/replies', replyRoutes);
 router.use('/posts/:postId/comments/:commentId/replies/:replyId/likes', replyLikeRoutes);
 router.use('/posts/:postId/saves', saveRoute);
 
+router.use('/products', productRoutes);
 
 module.exports = router;
