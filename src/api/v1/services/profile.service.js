@@ -157,160 +157,173 @@ const profileService = {
       _count: undefined
     }
   },
-  getUserPosts: async (userId, currentUserId) => {
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) }
-    });
 
-    if (!user) {
-      throw new NotFoundError("User");
-    }
-    try {
-      const posts = await prisma.post.findMany({
-        where: {
-          userId: parseInt(userId)
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true
-            }
-          },
-          likes: {
-            where: {
-              userId: parseInt(currentUserId)
-            }
-          },
-          saves: {
-            where: {
-              userId: parseInt(currentUserId)
-            }
-          },
-          _count: {
-            select: {
-              likes: true,
-              comments: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
+  getUserPosts: async (userId, currentUserId, page = 1, pageSize = 10) => {
+      const user = await prisma.user.findUnique({
+          where: { id: parseInt(userId) }
       });
-
-      const postsWithDetails = await Promise.all(
-        posts.map(async (post) => {
-          const { likes, saves, _count, ...postData } = post;
-          const isMyself = post.user.id === parseInt(currentUserId);
-
-          const followStatus = !isMyself ? await prisma.follow.findFirst({
-            where: {
-              AND: [
-                { followerId: parseInt(currentUserId) },
-                { followingId: post.user.id }
-              ]
-            }
-          }) : null;
-
+  
+      if (!user) {
+          throw new NotFoundError("User");
+      }
+  
+      try {
+          const skip = (page - 1) * pageSize;
+  
+          const posts = await prisma.post.findMany({
+              where: {
+                  userId: parseInt(userId)
+              },
+              include: {
+                  user: {
+                      select: {
+                          id: true,
+                          name: true,
+                          username: true,
+                          avatar: true
+                      }
+                  },
+                  likes: {
+                      where: {
+                          userId: parseInt(currentUserId)
+                      }
+                  },
+                  saves: {
+                      where: {
+                          userId: parseInt(currentUserId)
+                      }
+                  },
+                  _count: {
+                      select: {
+                          likes: true,
+                          comments: true
+                      }
+                  }
+              },
+              skip,
+              take: pageSize,
+              orderBy: {
+                  createdAt: 'desc'
+              }
+          });
+  
+          const totalPosts = await prisma.post.count({
+              where: {
+                  userId: parseInt(userId)
+              }
+          });
+  
+          const postsWithDetails = await Promise.all(
+              posts.map(async (post) => {
+                  const { likes, saves, _count, ...postData } = post;
+  
+                  return {
+                      ...postData,
+                      likesCount: _count.likes,
+                      commentsCount: _count.comments
+                  };
+              })
+          );
+  
           return {
-            ...postData,
-            isMyself,
-            isFollowing: !!followStatus,
-            isLiked: likes.length > 0,
-            isSaved: saves.length > 0,
-            likesCount: _count.likes,
-            commentsCount: _count.comments
+              posts: postsWithDetails,
+              pagination: {
+                  currentPage: page,
+                  pageSize,
+                  totalPosts,
+                  totalPages: Math.ceil(totalPosts / pageSize)
+              }
           };
-        })
-      );
-
-      return postsWithDetails;
-    } catch (error) {
-      throw new Error("Failed to get user posts");
-    }
+      } catch (error) {
+          throw new Error("Failed to get user posts");
+      }
   },
 
-  getUserLikedPosts: async (userId, currentUserId) => {
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) }
-    });
-
-    if (!user) {
-      throw new NotFoundError("User");
-    }
-    try {
-      const posts = await prisma.post.findMany({
-        where: {
-          likes: {
-            some: {
-              userId: parseInt(userId)
-            }
-          }
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              avatar: true
-            }
-          },
-          likes: {
-            where: {
-              userId: parseInt(currentUserId)
-            }
-          },
-          saves: {
-            where: {
-              userId: parseInt(currentUserId)
-            }
-          },
-          _count: {
-            select: {
-              likes: true,
-              comments: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
+  getUserLikedPosts: async (userId, currentUserId, page = 1, pageSize = 10) => {
+      const user = await prisma.user.findUnique({
+          where: { id: parseInt(userId) }
       });
-
-      const postsWithDetails = await Promise.all(
-        posts.map(async (post) => {
-          const { likes, saves, _count, ...postData } = post;
-          const isMyself = post.user.id === parseInt(currentUserId);
-
-          const followStatus = !isMyself ? await prisma.follow.findFirst({
-            where: {
-              AND: [
-                { followerId: parseInt(currentUserId) },
-                { followingId: post.user.id }
-              ]
-            }
-          }) : null;
-
+  
+      if (!user) {
+          throw new NotFoundError("User");
+      }
+  
+      try {
+          const skip = (page - 1) * pageSize;
+  
+          const posts = await prisma.post.findMany({
+              where: {
+                  likes: {
+                      some: {
+                          userId: parseInt(userId)
+                      }
+                  }
+              },
+              include: {
+                  user: {
+                      select: {
+                          id: true,
+                          name: true,
+                          username: true,
+                          avatar: true
+                      }
+                  },
+                  likes: {
+                      where: {
+                          userId: parseInt(currentUserId)
+                      }
+                  },
+                  saves: {
+                      where: {
+                          userId: parseInt(currentUserId)
+                      }
+                  },
+                  _count: {
+                      select: {
+                          likes: true,
+                          comments: true
+                      }
+                  }
+              },
+              skip,
+              take: pageSize,
+              orderBy: {
+                  createdAt: 'desc'
+              }
+          });
+  
+          const totalLikedPosts = await prisma.post.count({
+              where: {
+                  likes: {
+                      some: {
+                          userId: parseInt(userId)
+                      }
+                  }
+              }
+          });
+  
+          const postsWithDetails = posts.map(post => {
+              const { likes, saves, _count, ...postData } = post;
+  
+              return {
+                  ...postData,
+                  likesCount: _count.likes,
+                  commentsCount: _count.comments
+              };
+          });
+  
           return {
-            ...postData,
-            isMyself,
-            isFollowing: !!followStatus,
-            isLiked: likes.length > 0,
-            isSaved: saves.length > 0,
-            likesCount: _count.likes,
-            commentsCount: _count.comments
+              posts: postsWithDetails,
+              pagination: {
+                  currentPage: page,
+                  pageSize,
+                  totalLikedPosts,
+                  totalPages: Math.ceil(totalLikedPosts / pageSize)
+              }
           };
-        })
-      );
-
-      return postsWithDetails;
-    } catch (error) {
-      throw new Error("Failed to get liked posts");
-    }
+      } catch (error) {
+          throw new Error("Failed to get liked posts");
+      }
   },
 
   getUserSavedPosts: async (userId, currentUserId) => {
