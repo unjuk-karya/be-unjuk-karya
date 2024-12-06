@@ -181,8 +181,8 @@ const postService = {
       const followStatus = !isMyself ? await prisma.follow.findFirst({
         where: {
           AND: [
-            { followerId: parseInt(userId) },       
-            { followingId: post.user.id }          
+            { followerId: parseInt(userId) },
+            { followingId: post.user.id }
           ]
         }
       }) : null;
@@ -192,7 +192,7 @@ const postService = {
       return {
         ...postData,
         isMyself,
-        isFollowing: !!followStatus,  
+        isFollowing: !!followStatus,
         isLiked: likes.length > 0,
         isSaved: saves.length > 0,
         likesCount: _count.likes,
@@ -206,11 +206,11 @@ const postService = {
       throw new Error("Failed to get post");
     }
   },
-  
+
   getAllPosts: async (userId, page = 1, pageSize = 10) => {
     try {
       const skip = (page - 1) * pageSize;
-  
+
       const posts = await prisma.post.findMany({
         include: {
           user: {
@@ -244,36 +244,20 @@ const postService = {
           createdAt: 'desc'
         }
       });
-  
-      const totalPosts = await prisma.post.count(); // Hitung jumlah total post
-  
+
+      const totalPosts = await prisma.post.count();
+
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {
-          const isMyself = post.user.id === parseInt(userId);
-          const followStatus = !isMyself
-            ? await prisma.follow.findFirst({
-                where: {
-                  AND: [
-                    { followerId: parseInt(userId) },
-                    { followingId: post.user.id }
-                  ]
-                }
-              })
-            : null;
-  
           const { likes, saves, _count, ...postData } = post;
           return {
             ...postData,
-            isMyself,
-            isFollowing: !!followStatus,
-            isLiked: likes.length > 0,
-            isSaved: saves.length > 0,
             likesCount: _count.likes,
             commentsCount: _count.comments
           };
         })
       );
-  
+
       return {
         posts: postsWithFollow,
         pagination: {
@@ -287,13 +271,15 @@ const postService = {
       throw new Error("Failed to get all posts");
     }
   },
-  
-  getFollowingPosts: async (userId) => {
+
+  getFollowingPosts: async (userId, page = 1, pageSize = 10) => {
     try {
+      const skip = (page - 1) * pageSize;
+
       const posts = await prisma.post.findMany({
         where: {
           user: {
-            followers: {              
+            followers: {
               some: {
                 followerId: parseInt(userId),
               },
@@ -326,19 +312,30 @@ const postService = {
             },
           },
         },
+        skip,
+        take: pageSize,
         orderBy: {
           createdAt: "desc",
         },
       });
 
+      const totalFollowingPosts = await prisma.post.count({
+        where: {
+          user: {
+            followers: {
+              some: {
+                followerId: parseInt(userId),
+              },
+            },
+          },
+        },
+      });
+
       const postsWithDetails = posts.map((post) => {
         const { likes, saves, _count, ...postData } = post;
-        const isMyself = post.user.id === parseInt(userId);
-        
+
         return {
           ...postData,
-          isMyself,
-          isFollowing: true,
           isLiked: likes.length > 0,
           isSaved: saves.length > 0,
           likesCount: _count.likes,
@@ -346,7 +343,15 @@ const postService = {
         };
       });
 
-      return postsWithDetails;
+      return {
+        posts: postsWithDetails,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          totalFollowingPosts,
+          totalPages: Math.ceil(totalFollowingPosts / pageSize),
+        },
+      };
     } catch (error) {
       throw new Error("Failed to get following posts");
     }

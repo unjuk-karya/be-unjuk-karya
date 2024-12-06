@@ -100,11 +100,15 @@ const postController = {
 
   getFollowingPosts: async (req, res) => {
     try {
-      const userId = req.user.id;
-      const result = await postService.getFollowingPosts(userId);
-      return res.json(createSuccessResponse(result));
+        const userId = req.user.id;
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+
+        const result = await postService.getFollowingPosts(userId, page, pageSize);
+
+        return res.json(createSuccessResponse(result, "Following posts fetched successfully"));
     } catch (error) {
-      return res.status(error.status || 500).json(createErrorResponse(error));
+        return res.status(error.status || 500).json(createErrorResponse(error));
     }
   }
 };
