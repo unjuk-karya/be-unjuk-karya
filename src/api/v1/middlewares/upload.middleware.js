@@ -20,29 +20,6 @@ const fileFilter = (req, file, cb) => {
   }));
 };
 
-const uploadToGCS = async (file) => {
-  const uniqueId = crypto.randomBytes(6).toString('hex');
-  const timestamp = Date.now().toString();
-  const fileName = `${timestamp}-${uniqueId}${path.extname(file.originalname).toLowerCase()}`;
-
-  const blob = bucket.file(`posts/${fileName}`);
-  const stream = blob.createWriteStream({
-    resumable: false,
-    contentType: file.mimetype,
-    predefinedAcl: 'publicRead',
-  });
-
-  return new Promise((resolve, reject) => {
-    stream.on('error', (err) => reject(err));
-    stream.on('finish', () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/posts/${fileName}`;
-      resolve(publicUrl);
-    });
-
-    stream.end(file.buffer);
-  });
-};
-
 const createUpload = (fieldConfig, folderPath) => {
   const multerInstance = multer({
     storage: multerStorage,

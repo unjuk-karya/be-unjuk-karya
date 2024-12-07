@@ -88,14 +88,14 @@ const productService = {
     }
 
     try {
-      if (image && existingProduct.image) {
-        const oldImageName = existingProduct.image.split('/').pop();
-        try {
-          await bucket.file(`products/${oldImageName}`).delete();
-        } catch (err) {
-          throw new Error("Failed to delete old image");
-        }
-      }
+      // if (image && existingProduct.image) {
+      //   const oldImageName = existingProduct.image.split('/').pop();
+      //   try {
+      //     await bucket.file(`products/${oldImageName}`).delete();
+      //   } catch (err) {
+      //     throw new Error("Failed to delete old image");
+      //   }
+      // }
 
       const updatedProduct = await prisma.product.update({
         where: { id: parseInt(id) },
@@ -128,15 +128,15 @@ const productService = {
       return updatedProduct;
 
     } catch (error) {
-      if (image) {
-        const newImageName = image.split('/').pop();
-        try {
-          await bucket.file(`products/${newImageName}`).delete();
-        } catch (deleteErr) {
-          throw new Error("Failed to delete new image after update error");
-        }
-      }
-      throw error;
+      // if (image) {
+      //   const newImageName = image.split('/').pop();
+      //   try {
+      //     await bucket.file(`products/${newImageName}`).delete();
+      //   } catch (deleteErr) {
+      //     throw new Error("Failed to delete new image after update error");
+      //   }
+      // }
+      // throw error;
     }
   },
 
@@ -144,7 +144,10 @@ const productService = {
     const { id, userId } = data;
 
     const existingProduct = await prisma.product.findUnique({
-      where: { id: parseInt(id) }
+      where: {
+        id: parseInt(id),
+        deletedAt: null
+      }
     });
 
     if (!existingProduct) {
@@ -156,17 +159,20 @@ const productService = {
     }
 
     try {
-      if (existingProduct.image) {
-        const imageName = existingProduct.image.split('/').pop();
-        try {
-          await bucket.file(`products/${imageName}`).delete();
-        } catch (err) {
-          throw new Error("Failed to delete image");
-        }
-      }
+      // if (existingProduct.image) {
+      //   const imageName = existingProduct.image.split('/').pop();
+      //   try {
+      //     await bucket.file(`products/${imageName}`).delete();
+      //   } catch (err) {
+      //     throw new Error("Failed to delete image");
+      //   }
+      // }
 
-      await prisma.product.delete({
-        where: { id: parseInt(id) }
+      await prisma.product.update({
+        where: { id: parseInt(id) },
+        data: {
+          deletedAt: new Date(),
+        }
       });
 
       return true;
@@ -178,7 +184,7 @@ const productService = {
   getProductById: async (id) => {
     try {
       const product = await prisma.product.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id), deletedAt: null },
         include: {
           user: {
             select: {
@@ -215,7 +221,10 @@ const productService = {
     try {
       const skip = (page - 1) * pageSize;
 
-      const where = categoryId ? { categoryId: parseInt(categoryId) } : {};
+      const where = {
+        deletedAt: null,
+        ...(categoryId && { categoryId: parseInt(categoryId) })
+      };
 
       const products = await prisma.product.findMany({
         where,

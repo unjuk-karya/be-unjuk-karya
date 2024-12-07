@@ -17,17 +17,16 @@ model User {
   address      String?
   avatar       String?
   bio          String?
-  coverPhoto   String?            
+  coverPhoto   String?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   posts        Post[]
   comments     Comment[]
   postLikes    PostLike[]
   commentLikes CommentLike[]
-  replyLikes   CommentReplyLike[]
-  replies      CommentReply[]
-  saves        Save[]    
-  products     Product[]          // Relation to products
+  saves        Save[]
+  products     Product[]
+  orders       Order[]
   // User yang follow saya (my followers)
   followers    Follow[]           @relation("Followers")
   // User yang follow saya (users I follow)
@@ -37,11 +36,11 @@ model User {
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
 
   @@map("categories")
 }
@@ -54,23 +53,55 @@ model Product {
   stock       Int
   image       String
   userId      Int
-  categoryId  Int      
+  categoryId  Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
   user        User     @relation(fields: [userId], references: [id])
-  category    Category @relation(fields: [categoryId], references: [id]) 
-  
+  category    Category @relation(fields: [categoryId], references: [id])
+  orders      Order[]
+
   @@map("products")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  orderId       String      @unique 
+  userId        Int
+  productId     Int
+  quantity      Int
+  totalAmount   Float
+  productName   String
+  productPrice  Float
+  productImage  String
+  status        OrderStatus @default(PENDING)
+  snapToken     String
+  redirectUrl   String
+  paymentDue    DateTime
+  paidAt        DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id])
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  EXPIRED
+  CANCELED
+  PENDING
+  PAID
 }
 
 model Follow {
   id          Int      @id @default(autoincrement())
-  followerId  Int      // ID user yang melakukan follow
-  followingId Int      // ID user yang di-follow
+  followerId  Int // ID user yang melakukan follow
+  followingId Int // ID user yang di-follow
   createdAt   DateTime @default(now())
-  
-  follower    User     @relation("Following", fields: [followerId], references: [id])  // User yang melakukan follow
-  following   User     @relation("Followers", fields: [followingId], references: [id]) // User yang di-follow
+
+  follower  User @relation("Following", fields: [followerId], references: [id]) // User yang melakukan follow
+  following User @relation("Followers", fields: [followingId], references: [id]) // User yang di-follow
 
   @@unique([followerId, followingId])
   @@map("follows")
@@ -87,7 +118,7 @@ model Post {
   user      User       @relation(fields: [userId], references: [id])
   comments  Comment[]
   likes     PostLike[]
-  saves     Save[]    
+  saves     Save[]
 
   @@map("posts")
 }
@@ -114,7 +145,6 @@ model Comment {
   user      User           @relation(fields: [userId], references: [id])
   post      Post           @relation(fields: [postId], references: [id])
   likes     CommentLike[]
-  replies   CommentReply[]
 
   @@map("comments")
 }
@@ -131,32 +161,6 @@ model CommentLike {
   @@map("comment_likes")
 }
 
-model CommentReply {
-  id        Int                @id @default(autoincrement())
-  content   String
-  userId    Int
-  commentId Int
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  user      User               @relation(fields: [userId], references: [id])
-  comment   Comment            @relation(fields: [commentId], references: [id])
-  likes     CommentReplyLike[]
-
-  @@map("comment_replies")
-}
-
-model CommentReplyLike {
-  id        Int          @id @default(autoincrement())
-  userId    Int
-  replyId   Int
-  createdAt DateTime     @default(now())
-  user      User         @relation(fields: [userId], references: [id])
-  reply     CommentReply @relation(fields: [replyId], references: [id])
-
-  @@unique([userId, replyId])
-  @@map("comment_reply_likes")
-}
-
 model Save {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -166,5 +170,5 @@ model Save {
   post      Post     @relation(fields: [postId], references: [id])
 
   @@unique([userId, postId])
-  @@map("saves")    
+  @@map("saves")
 }

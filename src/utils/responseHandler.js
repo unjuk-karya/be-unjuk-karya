@@ -28,7 +28,7 @@ class UnauthorizedError extends BaseError {
 const createErrorResponse = (error) => ({
   status: error.status || 500,
   message: error.message,
-  errors: error.errors || {}
+  errors: error.errors || null
 });
 
 const createSuccessResponse = (data, message = "Success", status = 200) => ({
