@@ -97,7 +97,7 @@ const followService = {
     return followersWithDetails;
   },
 
-  getFollowing: async (userId, currentUserId) => {
+  getFollowings: async (userId, currentUserId) => {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId) }
     });

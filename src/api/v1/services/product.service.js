@@ -4,15 +4,24 @@ const bucket = require('../../../config/gcs');
 
 const productService = {
   createProduct: async (data) => {
-    const { userId, name, description, price, stock, image } = data;
+    const { userId, name, description, price, stock, image, categoryId } = data;
 
     handleValidation({
       name: { value: name, message: "The name field is required." },
       description: { value: description, message: "The description field is required." },
       price: { value: price, message: "The price field is required." },
       stock: { value: stock, message: "The stock field is required." },
-        image: { value: image, message: "The image field is required." }
+      image: { value: image, message: "The image field is required." },
+      categoryId: { value: categoryId, message: "The category field is required." }
     });
+
+    const category = await prisma.category.findUnique({
+      where: { id: parseInt(categoryId) }
+    });
+
+    if (!category) {
+      throw new NotFoundError("Category");
+    }
 
     try {
       return await prisma.product.create({
@@ -22,7 +31,8 @@ const productService = {
           price,
           stock,
           image,
-          userId: parseInt(userId)
+          userId: parseInt(userId),
+          categoryId: parseInt(categoryId)
         },
         include: {
           user: {
@@ -31,6 +41,12 @@ const productService = {
               name: true,
               username: true,
               avatar: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
             }
           }
         }
@@ -41,13 +57,14 @@ const productService = {
   },
 
   updateProduct: async (data) => {
-    const { id, userId, name, description, price, stock, image } = data;
+    const { id, userId, name, description, price, stock, image, categoryId } = data;
 
     handleValidation({
       name: { value: name, message: "The name field is required." },
       description: { value: description, message: "The description field is required." },
       price: { value: price, message: "The price field is required." },
-      stock: { value: stock, message: "The stock field is required." }
+      stock: { value: stock, message: "The stock field is required." },
+      categoryId: { value: categoryId, message: "The category field is required." }
     });
 
     const existingProduct = await prisma.product.findUnique({
@@ -60,6 +77,14 @@ const productService = {
 
     if (existingProduct.userId !== parseInt(userId)) {
       throw new UnauthorizedError("You are not authorized to update this product");
+    }
+
+    const category = await prisma.category.findUnique({
+      where: { id: parseInt(categoryId) }
+    });
+
+    if (!category) {
+      throw new NotFoundError("Category");
     }
 
     try {
@@ -79,7 +104,8 @@ const productService = {
           description,
           price,
           stock,
-          image: image || existingProduct.image
+          image: image || existingProduct.image,
+          categoryId: parseInt(categoryId)
         },
         include: {
           user: {
@@ -88,6 +114,12 @@ const productService = {
               name: true,
               username: true,
               avatar: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
             }
           }
         }
@@ -155,6 +187,12 @@ const productService = {
               username: true,
               avatar: true
             }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
       });
@@ -172,12 +210,15 @@ const productService = {
       throw new Error("Failed to get product");
     }
   },
-  
-  getAllProducts: async (page = 1, pageSize = 10) => {
+
+  getAllProducts: async (page = 1, pageSize = 10, categoryId = null) => {
     try {
       const skip = (page - 1) * pageSize;
-  
+
+      const where = categoryId ? { categoryId: parseInt(categoryId) } : {};
+
       const products = await prisma.product.findMany({
+        where,
         include: {
           user: {
             select: {
@@ -185,6 +226,12 @@ const productService = {
               name: true,
               username: true,
               avatar: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
             }
           }
         },
@@ -194,9 +241,9 @@ const productService = {
           createdAt: 'desc'
         }
       });
-  
-      const totalProducts = await prisma.product.count();
-  
+
+      const totalProducts = await prisma.product.count({ where });
+
       return {
         products,
         pagination: {

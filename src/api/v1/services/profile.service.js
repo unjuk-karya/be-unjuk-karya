@@ -404,6 +404,65 @@ const profileService = {
     } catch (error) {
       throw new Error("Failed to get saved posts");
     }
+  },
+
+  getUserProducts: async (userId, page = 1, pageSize = 10) => {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+
+    try {
+      const skip = (page - 1) * pageSize;
+
+      const products = await prisma.product.findMany({
+        where: {
+          userId: parseInt(userId)
+        },
+        include: {
+          user: {
+            select: {
+                id: true,
+                name: true,
+                username: true,
+                avatar: true
+            }
+        },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        },
+        skip,
+        take: pageSize,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      const totalProducts = await prisma.product.count({
+        where: {
+          userId: parseInt(userId)
+        }
+      });
+
+      return {
+        products,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          totalProducts,
+          totalPages: Math.ceil(totalProducts / pageSize)
+        }
+      };
+    } catch (error) {
+      throw new Error("Failed to get user products");
+    }
   }
 };
 

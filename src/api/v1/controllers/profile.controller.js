@@ -30,13 +30,13 @@ const profileController = {
         try {
           const imagePath = new URL(req.files.avatar[0].cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
           await bucket.file(imagePath).delete();
-        } catch (err) {}
+        } catch (err) { }
       }
       if (req.files?.coverPhoto?.[0]?.cloudStoragePublicUrl) {
         try {
           const imagePath = new URL(req.files.coverPhoto[0].cloudStoragePublicUrl).pathname.split('/').slice(2).join('/');
           await bucket.file(imagePath).delete();
-        } catch (err) {}
+        } catch (err) { }
       }
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
@@ -45,7 +45,7 @@ const profileController = {
     try {
       const userId = parseInt(req.params.userId);
       const currentUserId = req.user.id;
-      
+
       const result = await profileService.getUserProfile(userId, currentUserId);
       return res.json(createSuccessResponse(result));
     } catch (error) {
@@ -53,39 +53,50 @@ const profileController = {
     }
   },
   getUserPosts: async (req, res) => {
-      try {
-          const userId = parseInt(req.params.userId);
-          const currentUserId = req.user.id;
-          const page = parseInt(req.query.page) || 1;
-          const pageSize = parseInt(req.query.pageSize) || 10;
-  
-          const result = await profileService.getUserPosts(userId, currentUserId, page, pageSize);
-          return res.json(createSuccessResponse(result, "User posts fetched successfully"));
-      } catch (error) {
-          return res.status(error.status || 500).json(createErrorResponse(error));
-      }
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+
+      const result = await profileService.getUserPosts(userId, currentUserId, page, pageSize);
+      return res.json(createSuccessResponse(result, "User posts fetched successfully"));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   },
   getUserLikedPosts: async (req, res) => {
-      try {
-          const userId = parseInt(req.params.userId);
-          const currentUserId = req.user.id;
-          const page = parseInt(req.query.page) || 1;
-          const pageSize = parseInt(req.query.pageSize) || 10;
-  
-          const result = await profileService.getUserLikedPosts(userId, currentUserId, page, pageSize);
-          return res.json(createSuccessResponse(result, "User liked posts fetched successfully"));
-      } catch (error) {
-          return res.status(error.status || 500).json(createErrorResponse(error));
-      }
-  },
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
 
+      const result = await profileService.getUserLikedPosts(userId, currentUserId, page, pageSize);
+      return res.json(createSuccessResponse(result, "User liked posts fetched successfully"));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
   getUserSavedPosts: async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const currentUserId = req.user.id;
-      
+
       const result = await profileService.getUserSavedPosts(userId, currentUserId);
       return res.json(createSuccessResponse(result));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  },
+  getUserProducts: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+
+      const result = await profileService.getUserProducts(userId, page, pageSize);
+      return res.json(createSuccessResponse(result, "User products fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }

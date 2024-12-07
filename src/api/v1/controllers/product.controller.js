@@ -6,7 +6,7 @@ const productController = {
   createProduct: async (req, res) => {
     try {
       const userId = req.user.id;
-      const { name, description, price, stock } = req.body;
+      const { name, description, price, stock, categoryId } = req.body;
       const image = req.file?.cloudStoragePublicUrl;
       
       const result = await productService.createProduct({
@@ -15,6 +15,7 @@ const productController = {
         description,
         price: parseFloat(price),
         stock: parseInt(stock),
+        categoryId: parseInt(categoryId),
         image,
       });
       
@@ -37,7 +38,7 @@ const productController = {
     try {
       const userId = req.user.id;
       const { id } = req.params;
-      const { name, description, price, stock } = req.body;
+      const { name, description, price, stock, categoryId } = req.body;
       const image = req.file?.cloudStoragePublicUrl;
 
       const result = await productService.updateProduct({
@@ -47,6 +48,7 @@ const productController = {
         description,
         price: parseFloat(price),
         stock: parseInt(stock),
+        categoryId: parseInt(categoryId),
         image
       });
 
@@ -90,8 +92,9 @@ const productController = {
     try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId) : null;
       
-      const result = await productService.getAllProducts(page, pageSize);
+      const result = await productService.getAllProducts(page, pageSize, categoryId);
       
       return res.json(createSuccessResponse(result, "Products fetched successfully"));
     } catch (error) {
