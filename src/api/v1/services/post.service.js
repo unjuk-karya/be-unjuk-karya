@@ -126,8 +126,6 @@ const postService = {
       }
 
       await prisma.$transaction([
-        prisma.commentReplyLike.deleteMany({ where: { reply: { comment: { postId: parseInt(id) } } } }),
-        prisma.commentReply.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
         prisma.commentLike.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
         prisma.comment.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.postLike.deleteMany({ where: { postId: parseInt(id) } }),
