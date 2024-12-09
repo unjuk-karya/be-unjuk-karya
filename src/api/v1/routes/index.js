@@ -11,6 +11,7 @@ const followRoutes = require('./follow.routes');
 const profileRoutes = require('./profile.routes');
 const productRoutes = require('./product.routes');
 const orderRoutes = require('./order.routes');
+const reviewRoutes = require('./review.routes'); // Added review routes
 
 router.use('/auth', authRoutes);
 router.use('/users', searchRoutes);
@@ -24,5 +25,6 @@ router.use('/posts/:postId/comments/:commentId/likes', commentLikeRoutes);
 
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
+router.use('/orders/:orderId/reviews', reviewRoutes);
 
 module.exports = router;

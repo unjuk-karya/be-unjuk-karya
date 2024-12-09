@@ -191,7 +191,20 @@ const productService = {
               id: true,
               name: true,
               username: true,
-              avatar: true
+              avatar: true,
+              products: {
+                where: { deletedAt: null },
+                include: {
+                  orders: {
+                    where: { status: 'PAID' },
+                    include: {
+                      reviews: {
+                        select: { rating: true }
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           category: {
@@ -199,16 +212,71 @@ const productService = {
               id: true,
               name: true
             }
+          },
+          _count: {
+            select: {
+              orders: {
+                where: { status: 'PAID' }
+              }
+            }
+          },
+          orders: {
+            where: { status: 'PAID' },
+            include: {
+              reviews: {
+                select: {
+                  rating: true
+                }
+              }
+            }
           }
         }
       });
-
+  
       if (!product) {
         throw new NotFoundError("Product");
       }
-
-      return product;
-
+  
+      const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
+      const averageRating = ratings.length > 0 ? 
+        ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
+  
+      const sellerRatings = product.user.products
+        .flatMap(prod => prod.orders
+          .flatMap(order => order.reviews
+            .map(review => review.rating)));
+  
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        stock: product.stock,
+        image: product.image,
+        userId: product.userId,
+        categoryId: product.categoryId,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        deletedAt: product.deletedAt,
+        user: {
+          id: product.user.id,
+          name: product.user.name,
+          username: product.user.username,
+          avatar: product.user.avatar,
+          totalProducts: product.user.products.length,
+          sellerRating: sellerRatings.length > 0 ? 
+            Number((sellerRatings.reduce((a, b) => a + b, 0) / sellerRatings.length).toFixed(1)) : 0,
+          totalSellerRatings: sellerRatings.length
+        },
+        category: {
+          id: product.category.id,
+          name: product.category.name
+        },
+        totalPurchases: product._count.orders,
+        rating: Number(averageRating.toFixed(1)),
+        totalRatings: ratings.length
+      };
+  
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
