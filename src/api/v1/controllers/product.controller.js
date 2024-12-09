@@ -92,9 +92,8 @@ const productController = {
     try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
-      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId) : null;
       
-      const result = await productService.getAllProducts(page, pageSize, categoryId);
+      const result = await productService.getAllProducts(page, pageSize);
       
       return res.json(createSuccessResponse(result, "Products fetched successfully"));
     } catch (error) {

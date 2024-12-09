@@ -285,15 +285,11 @@ const productService = {
     }
   },
 
-  getAllProducts: async (page = 1, pageSize = 10, categoryId = null) => {
+  getAllProducts: async (page = 1, pageSize = 10) => {
     try {
       const skip = (page - 1) * pageSize;
-
-      const where = {
-        deletedAt: null,
-        ...(categoryId && { categoryId: parseInt(categoryId) })
-      };
-
+      const where = { deletedAt: null };
+  
       const products = await prisma.product.findMany({
         where,
         include: {
@@ -310,19 +306,45 @@ const productService = {
               id: true,
               name: true
             }
+          },
+          orders: {
+            where: { status: 'PAID' },
+            include: {
+              reviews: {
+                select: { rating: true }
+              }
+            }
+          },
+          _count: {
+            select: {
+              orders: {
+                where: { status: 'PAID' }
+              }
+            }
           }
         },
         skip,
         take: pageSize,
-        orderBy: {
-          createdAt: 'desc'
-        }
+        orderBy: { createdAt: 'desc' }
       });
-
+  
       const totalProducts = await prisma.product.count({ where });
-
+  
+      const productsWithDetails = products.map(product => {
+        const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
+        const averageRating = ratings.length > 0 ? 
+          ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
+  
+        const { _count, orders, ...productData } = product;
+        return {
+          ...productData,
+          rating: Number(averageRating.toFixed(1)),
+          sold: _count.orders
+        };
+      });
+  
       return {
-        products,
+        products: productsWithDetails,
         pagination: {
           currentPage: page,
           pageSize,
