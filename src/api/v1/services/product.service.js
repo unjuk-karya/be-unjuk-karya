@@ -355,6 +355,61 @@ const productService = {
     } catch (error) {
       throw new Error("Failed to get all products");
     }
+  },
+
+  getProductReviews: async (id, page = 1, pageSize = 10) => {
+    try {
+      const skip = (page - 1) * pageSize;
+  
+      const reviews = await prisma.review.findMany({
+        where: {
+          order: {
+            productId: parseInt(id) 
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true
+            }
+          },
+          order: {
+            select: {
+              productName: true,
+              productImage: true
+            }
+          }
+        },
+        skip,
+        take: pageSize,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+  
+      const totalReviews = await prisma.review.count({
+        where: {
+          order: {
+            productId: parseInt(id)
+          }
+        }
+      });
+  
+      return {
+        reviews,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          totalReviews,
+          totalPages: Math.ceil(totalReviews / pageSize)
+        }
+      };
+    } catch (error) {
+      throw new Error("Failed to get reviews");
+    }
   }
 };
 

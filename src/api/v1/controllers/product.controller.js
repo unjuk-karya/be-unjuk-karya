@@ -8,7 +8,7 @@ const productController = {
       const userId = req.user.id;
       const { name, description, price, stock, categoryId } = req.body;
       const image = req.file?.cloudStoragePublicUrl;
-      
+
       const result = await productService.createProduct({
         userId,
         name,
@@ -18,7 +18,7 @@ const productController = {
         categoryId: parseInt(categoryId),
         image,
       });
-      
+
       return res.status(201).json(
         createSuccessResponse(result, 'Product created successfully', 201)
       );
@@ -92,14 +92,27 @@ const productController = {
     try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
-      
+
       const result = await productService.getAllProducts(page, pageSize);
-      
+
       return res.json(createSuccessResponse(result, "Products fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
+
+  getProductReviews: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+
+      const result = await productService.getProductReviews(id, page, pageSize);
+      return res.json(createSuccessResponse(result, "Product reviews fetched successfully"));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
+  }
 };
 
 module.exports = productController;

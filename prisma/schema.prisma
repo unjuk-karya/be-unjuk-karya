@@ -14,9 +14,9 @@ model User {
   name         String?
   username     String        @unique
   phone        String?
-  address      String?
+  address      String?       @db.Text
   avatar       String?
-  bio          String?
+  bio          String?       @db.Text
   coverPhoto   String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -28,10 +28,8 @@ model User {
   products     Product[]
   orders       Order[]
   reviews      Review[]
-  // User yang follow saya (my followers)
-  followers Follow[] @relation("Followers")
-  // User yang follow saya (users I follow)
-  following Follow[] @relation("Following")
+  followers    Follow[]      @relation("Followers")
+  following    Follow[]      @relation("Following")
 
   @@map("users")
 }
@@ -49,7 +47,7 @@ model Category {
 model Product {
   id          Int       @id @default(autoincrement())
   name        String
-  description String
+  description String    @db.Text
   price       Float
   stock       Int
   image       String
@@ -92,42 +90,21 @@ model Order {
 model Review {
   id        Int      @id @default(autoincrement())
   rating    Int
-  comment   String
+  comment   String   @db.Text
   userId    Int
-  orderId   Int      
+  orderId   Int
   user      User     @relation(fields: [userId], references: [id])
-  order     Order    @relation(fields: [orderId], references: [id]) 
+  order     Order    @relation(fields: [orderId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("reviews")
 }
 
-
-enum OrderStatus {
-  EXPIRED
-  CANCELED
-  PENDING
-  PAID
-}
-
-model Follow {
-  id          Int      @id @default(autoincrement())
-  followerId  Int // ID user yang melakukan follow
-  followingId Int // ID user yang di-follow
-  createdAt   DateTime @default(now())
-
-  follower  User @relation("Following", fields: [followerId], references: [id]) // User yang melakukan follow
-  following User @relation("Followers", fields: [followingId], references: [id]) // User yang di-follow
-
-  @@unique([followerId, followingId])
-  @@map("follows")
-}
-
 model Post {
   id        Int        @id @default(autoincrement())
   title     String
-  content   String
+  content   String     @db.Text
   image     String
   userId    Int
   createdAt DateTime   @default(now())
@@ -140,6 +117,20 @@ model Post {
   @@map("posts")
 }
 
+model Comment {
+  id        Int           @id @default(autoincrement())
+  content   String        @db.Text
+  userId    Int
+  postId    Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id])
+  post      Post          @relation(fields: [postId], references: [id])
+  likes     CommentLike[]
+
+  @@map("comments")
+}
+
 model PostLike {
   id        Int      @id @default(autoincrement())
   userId    Int
@@ -150,20 +141,6 @@ model PostLike {
 
   @@unique([userId, postId])
   @@map("post_likes")
-}
-
-model Comment {
-  id        Int           @id @default(autoincrement())
-  content   String
-  userId    Int
-  postId    Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  user      User          @relation(fields: [userId], references: [id])
-  post      Post          @relation(fields: [postId], references: [id])
-  likes     CommentLike[]
-
-  @@map("comments")
 }
 
 model CommentLike {
@@ -188,4 +165,23 @@ model Save {
 
   @@unique([userId, postId])
   @@map("saves")
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+enum OrderStatus {
+  EXPIRED
+  CANCELED
+  PENDING
+  PAID
 }

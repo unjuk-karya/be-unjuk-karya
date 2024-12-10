@@ -44,7 +44,7 @@ const commentController = {
       const pageSize = parseInt(req.query.pageSize) || 5;
   
       const result = await commentService.getPostComments(postId, userId, page, pageSize);
-      return res.json(createSuccessResponse(result));
+      return res.json(createSuccessResponse(result, "Comments retrieved successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }

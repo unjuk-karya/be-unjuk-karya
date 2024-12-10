@@ -9,5 +9,6 @@ router.put('/:id', authMiddleware, ...createUpload('image', 'products/'), produc
 router.delete('/:id', authMiddleware, productController.deleteProduct);
 router.get('/', authMiddleware, productController.getAllProducts);
 router.get('/:id', authMiddleware, productController.getProductById);
+router.get('/:id/reviews', authMiddleware, productController.getProductReviews);
 
 module.exports = router;
