@@ -1,31 +1,31 @@
 const jwt = require('jsonwebtoken');
-const { handleValidation, ValidationError } = require('../../../utils/responseHandler');
+const { handleValidation, ValidationError, NotFoundError } = require('../../../utils/responseHandler');
 const prisma = require('../../../config/prisma');
 const bcrypt = require('bcryptjs');
 
 const authService = {
   register: async (data) => {
     const { email, username, password, confirmPassword } = data;
-  
+
     handleValidation({
       email: { value: email, message: "The email field is required." },
       username: { value: username, message: "The username field is required." },
       password: { value: password, message: "The password field is required." },
       confirmPassword: { value: confirmPassword, message: "The confirm password field is required." },
     });
-  
+
     if (password !== confirmPassword) {
       throw new ValidationError({
         password: ["The password and confirm password do not match."],
         confirmPassword: ["The password and confirm password do not match."]
       });
     }
-  
+
     const [existingUserEmail, existingUserUsername] = await Promise.all([
       prisma.user.findUnique({ where: { email } }),
       prisma.user.findUnique({ where: { username } })
     ]);
-  
+
     const errors = {};
     if (existingUserEmail) {
       errors.email = ["The email has already been taken."];
@@ -36,7 +36,7 @@ const authService = {
     if (Object.keys(errors).length > 0) {
       throw new ValidationError(errors);
     }
-  
+
     try {
       const user = await prisma.user.create({
         data: {
@@ -56,7 +56,7 @@ const authService = {
           coverPhoto: true
         }
       });
-  
+
       return user;
     } catch (error) {
       throw new Error("Failed to register user");
@@ -108,6 +108,53 @@ const authService = {
     } catch (error) {
       throw new Error("Failed to login");
     }
+  },
+
+  changePassword: async (userId, oldPassword, newPassword, confirmNewPassword) => {
+    handleValidation({
+      oldPassword: { value: oldPassword, message: "The old password field is required." },
+      newPassword: { value: newPassword, message: "The new password field is required." },
+      confirmNewPassword: { value: confirmNewPassword, message: "The confirm new password field is required." }
+    });
+
+    if (newPassword !== confirmNewPassword) {
+      throw new ValidationError({
+        newPassword: ["The new password and confirm new password do not match."],
+        confirmNewPassword: ["The new password and confirm new password do not match."]
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      throw new NotFoundError('User');
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new ValidationError({ oldPassword: ['Old password is incorrect'] });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: { password: hashedPassword }
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      phone: user.phone,
+      address: user.address,
+      avatar: user.avatar,
+      bio: user.bio,
+      coverPhoto: user.coverPhoto,
+    };
   }
 };
 

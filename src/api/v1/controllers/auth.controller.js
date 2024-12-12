@@ -18,6 +18,19 @@ const authController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+
+  changePassword: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+      const result = await authService.changePassword(userId, oldPassword, newPassword, confirmNewPassword);
+
+      return res.json(createSuccessResponse(result, 'Password changed successfully'));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 
