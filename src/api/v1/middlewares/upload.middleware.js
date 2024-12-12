@@ -16,14 +16,14 @@ const fileFilter = (req, file, cb) => {
   }
 
   cb(new ValidationError({
-    image: ["Only image files (jpg, jpeg, png) are allowed!"]
+    [file.fieldname]: ["Only image files (jpg, jpeg, png) are allowed!"]
   }));
 };
 
 const createUpload = (fieldConfig, folderPath) => {
   const multerInstance = multer({
     storage: multerStorage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
     fileFilter,
   });
 
@@ -33,7 +33,20 @@ const createUpload = (fieldConfig, folderPath) => {
     : multerInstance.single(fieldConfig);
 
   return [
-    multerMiddleware,
+    (req, res, next) => {
+      multerMiddleware(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return next(new ValidationError({
+              [err.field]: ["File size too large. Maximum allowed size is 5MB."]
+            }));
+          }
+        } else if (err) {
+          return next(err);
+        }
+        next();
+      });
+    },
     async (req, res, next) => {
       if (!req.file && !req.files) return next();
 
