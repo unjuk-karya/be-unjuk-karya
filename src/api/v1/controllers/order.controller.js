@@ -51,6 +51,20 @@ const orderController = {
         } catch (error) {
             return res.status(error.status || 500).json(createErrorResponse(error));
         }
+    },
+
+    getTransactionHistory: async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const page = parseInt(req.query.page) || 1;
+            const pageSize = parseInt(req.query.pageSize) || 10;
+
+            const result = await orderService.getTransactionHistory(userId, page, pageSize);
+
+            return res.json(createSuccessResponse(result, 'Transaction history fetched successfully'));
+        } catch (error) {
+            return res.status(error.status || 500).json(createErrorResponse(error));
+        }
     }
 };
 

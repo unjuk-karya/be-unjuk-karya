@@ -50,7 +50,7 @@ const orderService = {
             const totalAmount = product.price * quantity;
             const paymentDue = new Date();
             paymentDue.setHours(paymentDue.getHours() + 24);
-            
+
             const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
             const transactionDetails = {
@@ -99,34 +99,34 @@ const orderService = {
 
     cancelOrder: async (data) => {
         const { orderId, userId } = data;
-     
+
         const order = await prisma.order.findUnique({
             where: { id: parseInt(orderId) }
         });
-     
+
         if (!order) {
             throw new NotFoundError("Order");
         }
-     
+
         if (order.userId !== parseInt(userId)) {
             throw new UnauthorizedError("You are not authorized to cancel this order");
         }
-     
+
         if (order.status !== "PENDING") {
             throw new Error("Only pending orders can be cancelled");
         }
-     
+
         try {
             const cancelledOrder = await prisma.order.update({
                 where: { id: parseInt(orderId) },
                 data: { status: "CANCELED" }
             });
-    
+
             try {
                 const product = await prisma.product.findUnique({
                     where: { id: order.productId }
                 });
-     
+
                 if (product) {
                     await prisma.product.update({
                         where: { id: order.productId, deletedAt: null },
@@ -142,48 +142,48 @@ const orderService = {
             } catch (stockError) {
                 console.error(`Failed to handle stock return: ${stockError.message}`);
             }
-     
+
             try {
                 await snap.transaction.cancel(order.orderId);
             } catch (midtransError) {
                 console.log(`Failed to cancel in Midtrans but local cancelled: ${midtransError.message}`);
             }
-     
+
             return cancelledOrder;
-     
+
         } catch (error) {
             throw new Error(`Failed to cancel order: ${error.message}`);
         }
     },
-    
+
     handleNotification: async (notification) => {
         try {
             const statusResponse = await coreApi.transaction.notification(notification);
-            
+
             const orderId = statusResponse.order_id;
             const transactionStatus = statusResponse.transaction_status;
             const fraudStatus = statusResponse.fraud_status;
-     
+
             const order = await prisma.order.findFirst({
                 where: { orderId }
             });
-     
+
             if (!order) {
                 throw new NotFoundError("Order");
             }
-     
+
             if (order.status === 'CANCELED') {
                 try {
                     await snap.transaction.cancel(orderId);
                 } catch (cancelError) {
                     console.log(`Failed to cancel Midtrans transaction: ${cancelError.message}`);
                 }
-                return order; 
+                return order;
             }
-     
+
             let orderStatus;
             let shouldReturnStock = false;
-     
+
             if (transactionStatus == 'capture') {
                 if (fraudStatus == 'challenge') {
                     orderStatus = 'PENDING';
@@ -200,7 +200,7 @@ const orderService = {
             } else if (transactionStatus == 'pending') {
                 orderStatus = 'PENDING';
             }
-     
+
             const updatedOrder = await prisma.order.update({
                 where: { id: order.id },
                 data: {
@@ -208,13 +208,13 @@ const orderService = {
                     paidAt: orderStatus === 'PAID' ? new Date() : null
                 }
             });
-     
+
             if (shouldReturnStock) {
                 try {
                     const product = await prisma.product.findUnique({
                         where: { id: order.productId, deletedAt: null }
                     });
-     
+
                     if (product) {
                         await prisma.product.update({
                             where: { id: order.productId, deletedAt: null },
@@ -231,11 +231,73 @@ const orderService = {
                     console.error(`Failed to return stock for order ${order.id}: ${stockError.message}`);
                 }
             }
-     
+
             return updatedOrder;
-     
+
         } catch (error) {
             throw new Error(`Notification handling failed: ${error.message}`);
+        }
+    },
+
+    getTransactionHistory: async (userId, page = 1, pageSize = 10) => {
+        try {
+            const skip = (page - 1) * pageSize;
+    
+            const orders = await prisma.order.findMany({
+                where: { userId: parseInt(userId) },
+                include: {
+                    product: {
+                        select: {
+                            id: true,
+                            name: true,
+                            price: true,
+                            image: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    username: true
+                                }
+                            }
+                        }
+                    },
+                    reviews: {
+                        select: {
+                            id: true
+                        }
+                    }
+                },
+                skip,
+                take: pageSize,
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+    
+            const totalOrders = await prisma.order.count({
+                where: { userId: parseInt(userId) }
+            });
+    
+            const ordersWithStoreDetails = orders.map(order => {
+                const { product, reviews, ...orderData } = order;
+                return {
+                    ...orderData,
+                    storeId: product.user.id,
+                    storeName: product.user.username,
+                    isReviewed: reviews.length > 0,
+                };
+            });
+    
+            return {
+                orders: ordersWithStoreDetails,
+                pagination: {
+                    currentPage: page,
+                    pageSize,
+                    totalOrders,
+                    totalPages: Math.ceil(totalOrders / pageSize)
+                }
+            };
+        } catch (error) {
+            throw new Error("Failed to get transaction history");
         }
     }
 };
