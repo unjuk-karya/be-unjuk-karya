@@ -3,19 +3,19 @@ const prisma = require('../../../config/prisma');
 
 const saveService = {
     toggleSave: async (data) => {
-        const { postId, userId } = data;
+        const { productId, userId } = data;
 
-        const post = await prisma.post.findUnique({
-            where: { id: parseInt(postId) }
+        const product = await prisma.product.findUnique({
+            where: { id: parseInt(productId), deletedAt: null }
         });
 
-        if (!post) {
-            throw new NotFoundError("Post");
+        if (!product) {
+            throw new NotFoundError("Product");
         }
 
         const existingSave = await prisma.save.findFirst({
             where: {
-                postId: parseInt(postId),
+                productId: parseInt(productId),
                 userId: parseInt(userId)
             }
         });
@@ -29,7 +29,7 @@ const saveService = {
 
         await prisma.save.create({
             data: {
-                postId: parseInt(postId),
+                productId: parseInt(productId),
                 userId: parseInt(userId)
             }
         });

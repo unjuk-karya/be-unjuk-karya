@@ -181,7 +181,7 @@ const productService = {
     }
   },
 
-  getProductById: async (id) => {
+  getProductById: async (id, userId) => {
     try {
       const product = await prisma.product.findUnique({
         where: { id: parseInt(id), deletedAt: null },
@@ -229,6 +229,9 @@ const productService = {
                 }
               }
             }
+          },
+          saves: {
+            where: { userId: parseInt(userId) }
           }
         }
       });
@@ -274,7 +277,8 @@ const productService = {
         },
         totalPurchases: product._count.orders,
         rating: Number(averageRating.toFixed(1)),
-        totalRatings: ratings.length
+        totalRatings: ratings.length,
+        isSaved: product.saves.length > 0
       };
   
     } catch (error) {
@@ -285,7 +289,7 @@ const productService = {
     }
   },
 
-  getAllProducts: async (page = 1, pageSize = 10) => {
+  getAllProducts: async (page = 1, pageSize = 10, userId) => {
     try {
       const skip = (page - 1) * pageSize;
       const where = { deletedAt: null };
@@ -315,6 +319,9 @@ const productService = {
               }
             }
           },
+          saves: {
+            where: { userId: parseInt(userId) }
+          },
           _count: {
             select: {
               orders: {
@@ -335,11 +342,12 @@ const productService = {
         const averageRating = ratings.length > 0 ? 
           ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
   
-        const { _count, orders, ...productData } = product;
+        const { _count, orders, saves, ...productData } = product;
         return {
           ...productData,
           rating: Number(averageRating.toFixed(1)),
-          sold: _count.orders
+          sold: _count.orders,
+          isSaved: saves.length > 0
         };
       });
   

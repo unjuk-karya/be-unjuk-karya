@@ -59,6 +59,7 @@ model Product {
   user        User      @relation(fields: [userId], references: [id])
   category    Category  @relation(fields: [categoryId], references: [id])
   orders      Order[]
+  saves       Save[]
 
   @@map("products")
 }
@@ -112,7 +113,6 @@ model Post {
   user      User       @relation(fields: [userId], references: [id])
   comments  Comment[]
   likes     PostLike[]
-  saves     Save[]
 
   @@map("posts")
 }
@@ -158,12 +158,12 @@ model CommentLike {
 model Save {
   id        Int      @id @default(autoincrement())
   userId    Int
-  postId    Int
+  productId Int
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
 
-  @@unique([userId, postId])
+  @@unique([userId, productId])
   @@map("saves")
 }
 

@@ -20,11 +20,12 @@ router.use('/users', followRoutes);
 router.use('/users', profileRoutes);
 router.use('/posts', postRoutes);
 router.use('/posts/:postId/likes', postLike);
-router.use('/posts/:postId/saves', saveRoute);
+
 router.use('/posts/:postId/comments', commentRoutes);
 router.use('/posts/:postId/comments/:commentId/likes', commentLikeRoutes);
 
 router.use('/products', productRoutes);
+router.use('/products/:productId/saves', saveRoute);
 router.use('/orders', orderRoutes);
 router.use('/orders/:orderId/reviews', reviewRoutes);
 router.use('/categories', categoryRoutes);

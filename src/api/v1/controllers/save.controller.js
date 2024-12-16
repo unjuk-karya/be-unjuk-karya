@@ -5,11 +5,11 @@ const saveController = {
     toggleSave: async (req, res) => {
         try {
             const userId = req.user.id;
-            const { postId } = req.params;
+            const { productId } = req.params;
 
-            const result = await saveService.toggleSave({ postId, userId });
+            const result = await saveService.toggleSave({ productId, userId });
             return res.json(createSuccessResponse(result,
-                result.saved ? "Post saved successfully" : "Post unsaved successfully"
+                result.saved ? "Product saved successfully" : "Product unsaved successfully"
             ));
         } catch (error) {
             return res.status(error.status || 500).json(createErrorResponse(error));

@@ -81,7 +81,8 @@ const productController = {
   getProductById: async (req, res) => {
     try {
       const { id } = req.params;
-      const result = await productService.getProductById(id);
+      const userId = req.user.id;
+      const result = await productService.getProductById(id, userId);
       return res.json(createSuccessResponse(result));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
@@ -90,11 +91,12 @@ const productController = {
 
   getAllProducts: async (req, res) => {
     try {
+      const userId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
-
-      const result = await productService.getAllProducts(page, pageSize);
-
+  
+      const result = await productService.getAllProducts(page, pageSize, userId);
+  
       return res.json(createSuccessResponse(result, "Products fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));

@@ -157,11 +157,6 @@ const postService = {
               userId: parseInt(userId)
             }
           },
-          saves: {
-            where: {
-              userId: parseInt(userId)
-            }
-          },
           _count: {
             select: {
               comments: true,
@@ -185,14 +180,13 @@ const postService = {
         }
       }) : null;
 
-      const { likes, saves, _count, ...postData } = post;
+      const { likes, _count, ...postData } = post;
 
       return {
         ...postData,
         isMyself,
         isFollowing: !!followStatus,
         isLiked: likes.length > 0,
-        isSaved: saves.length > 0,
         likesCount: _count.likes,
         commentsCount: _count.comments
       };
@@ -224,11 +218,6 @@ const postService = {
               userId: parseInt(userId)
             }
           },
-          saves: {
-            where: {
-              userId: parseInt(userId)
-            }
-          },
           _count: {
             select: {
               likes: true,
@@ -247,7 +236,7 @@ const postService = {
 
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {
-          const { likes, saves, _count, ...postData } = post;
+          const { likes, _count, ...postData } = post;
           return {
             ...postData,
             likesCount: _count.likes,
@@ -298,11 +287,6 @@ const postService = {
               userId: parseInt(userId),
             },
           },
-          saves: {
-            where: {
-              userId: parseInt(userId),
-            },
-          },
           _count: {
             select: {
               comments: true,
@@ -330,12 +314,11 @@ const postService = {
       });
 
       const postsWithDetails = posts.map((post) => {
-        const { likes, saves, _count, ...postData } = post;
+        const { likes, _count, ...postData } = post;
 
         return {
           ...postData,
           isLiked: likes.length > 0,
-          isSaved: saves.length > 0,
           likesCount: _count.likes,
           commentsCount: _count.comments,
         };

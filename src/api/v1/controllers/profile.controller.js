@@ -78,24 +78,15 @@ const profileController = {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
   },
-  getUserSavedPosts: async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const currentUserId = req.user.id;
-
-      const result = await profileService.getUserSavedPosts(userId, currentUserId);
-      return res.json(createSuccessResponse(result));
-    } catch (error) {
-      return res.status(error.status || 500).json(createErrorResponse(error));
-    }
-  },
   getUserProducts: async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
 
-      const result = await profileService.getUserProducts(userId, page, pageSize);
+      const result = await profileService.getUserProducts(userId, currentUserId, page, pageSize);
+
       return res.json(createSuccessResponse(result, "User products fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
