@@ -17,5 +17,6 @@ router.get('/:userId/profile', authMiddleware, profileController.getUserProfile)
 router.get('/:userId/posts', authMiddleware, profileController.getUserPosts);
 router.get('/:userId/liked-posts', authMiddleware, profileController.getUserLikedPosts);
 router.get('/:userId/products', authMiddleware, profileController.getUserProducts);
+router.get('/:userId/saved-products', authMiddleware, profileController.getUserSavedProducts);
 
 module.exports = router;

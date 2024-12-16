@@ -405,6 +405,107 @@ const profileService = {
     } catch (error) {
       throw new Error("Failed to get user products");
     }
+  },
+
+  getUserSavedProducts: async (userId, currentUserId, page = 1, pageSize = 10) => {
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+
+    try {
+      const skip = (page - 1) * pageSize;
+
+      const products = await prisma.product.findMany({
+        where: {
+          saves: {
+            some: {
+              userId: parseInt(userId)
+            }
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          orders: {
+            where: { status: 'PAID' },
+            include: {
+              reviews: {
+                select: { rating: true }
+              }
+            }
+          },
+          saves: {
+            where: { 
+              userId: parseInt(currentUserId)  
+            }
+          },
+          _count: {
+            select: {
+              orders: {
+                where: { status: 'PAID' }
+              }
+            }
+          }
+        },
+        skip,
+        take: pageSize,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      const totalSavedProducts = await prisma.product.count({
+        where: {
+          saves: {
+            some: {
+              userId: parseInt(userId)  
+            }
+          }
+        }
+      });
+
+      const productsWithDetails = products.map(product => {
+        const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
+        const averageRating = ratings.length > 0 ? 
+          ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
+
+        const { _count, orders, saves, ...productData } = product;
+        return {
+          ...productData,
+          rating: Number(averageRating.toFixed(1)),
+          sold: _count.orders,
+          isSaved: saves.length > 0 
+        };
+      });
+
+      return {
+        products: productsWithDetails,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          totalSavedProducts,
+          totalPages: Math.ceil(totalSavedProducts / pageSize)
+        }
+      };
+    } catch (error) {
+      throw new Error("Failed to get saved products");
+    }
   }
 };
 

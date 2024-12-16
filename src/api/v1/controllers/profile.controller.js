@@ -91,6 +91,20 @@ const profileController = {
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));
     }
+  },
+  getUserSavedProducts: async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user.id;
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+
+      const result = await profileService.getUserSavedProducts(userId, currentUserId, page, pageSize);
+
+      return res.json(createSuccessResponse(result, "User saved products fetched successfully"));
+    } catch (error) {
+      return res.status(error.status || 500).json(createErrorResponse(error));
+    }
   }
 };
 
