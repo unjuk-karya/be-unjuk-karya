@@ -64,7 +64,7 @@ const reviewService = {
   },
 
   updateReview: async (data) => {
-    const { id, userId, orderId, rating, comment } = data;
+    const { userId, orderId, rating, comment } = data;
 
     handleValidation({
       rating: { value: rating, message: "The rating field is required." },
@@ -73,7 +73,6 @@ const reviewService = {
 
     const existingReview = await prisma.review.findFirst({
       where: { 
-        id: parseInt(id),
         orderId: parseInt(orderId)
       }
     });
@@ -88,7 +87,7 @@ const reviewService = {
 
     try {
       return await prisma.review.update({
-        where: { id: parseInt(id) },
+        where: { id: existingReview.id },
         data: { rating, comment },
         include: {
           user: {
@@ -112,33 +111,42 @@ const reviewService = {
     }
   },
 
-  deleteReview: async (data) => {
-    const { id, userId, orderId } = data;
-
-    const existingReview = await prisma.review.findFirst({
-      where: { 
-        id: parseInt(id),
-        orderId: parseInt(orderId)
-      }
-    });
-
-    if (!existingReview) {
-      throw new NotFoundError("Review");
-    }
-
-    if (existingReview.userId !== parseInt(userId)) {
-      throw new UnauthorizedError("You are not authorized to delete this review");
-    }
-
+  getReviewByOrderId: async (orderId) => {
     try {
-      await prisma.review.delete({
-        where: { id: parseInt(id) }
+      const review = await prisma.review.findFirst({
+        where: { 
+          orderId: parseInt(orderId)
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatar: true
+            }
+          },
+          order: {
+            select: {
+              productName: true,
+              productImage: true
+            }
+          }
+        }
       });
-      return true;
+
+      if (!review) {
+        throw new NotFoundError("Review");
+      }
+
+      return review;
     } catch (error) {
-      throw new Error("Failed to delete review");
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new Error("Failed to fetch review");
     }
-  }
+  },
 };
 
 module.exports = reviewService;

@@ -26,11 +26,10 @@ const reviewController = {
     updateReview: async (req, res) => {
         try {
             const userId = req.user.id;
-            const { orderId, id } = req.params;
+            const { orderId } = req.params;
             const { rating, comment } = req.body;
 
             const result = await reviewService.updateReview({
-                id,
                 orderId,
                 userId,
                 rating,
@@ -45,17 +44,18 @@ const reviewController = {
         }
     },
 
-    deleteReview: async (req, res) => {
+    getReviewByOrderId: async (req, res) => {
         try {
-            const userId = req.user.id;
-            const { orderId, id } = req.params;
+            const { orderId } = req.params;
+            const result = await reviewService.getReviewByOrderId(orderId);
 
-            await reviewService.deleteReview({ id, orderId, userId });
-            return res.json(createSuccessResponse(null, "Review deleted successfully"));
+            return res.json(
+                createSuccessResponse(result, "Review fetched successfully")
+            );
         } catch (error) {
             return res.status(error.status || 500).json(createErrorResponse(error));
         }
-    }
+    },
 };
 
 module.exports = reviewController;
