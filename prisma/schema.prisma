@@ -8,28 +8,31 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  password     String
-  name         String?
-  username     String        @unique
-  phone        String?
-  address      String?       @db.Text
-  avatar       String?
-  bio          String?       @db.Text
-  coverPhoto   String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  posts        Post[]
-  comments     Comment[]
-  postLikes    PostLike[]
-  commentLikes CommentLike[]
-  saves        Save[]
-  products     Product[]
-  orders       Order[]
-  reviews      Review[]
-  followers    Follow[]      @relation("Followers")
-  following    Follow[]      @relation("Following")
+  id                   Int           @id @default(autoincrement())
+  email                String        @unique
+  password             String
+  name                 String?
+  username             String        @unique
+  phone                String?
+  address              String?       @db.Text
+  avatar               String?
+  bio                  String?       @db.Text
+  coverPhoto           String?
+  midtransServerKey    String?
+  midtransClientKey    String?
+  midtransIsProduction Boolean?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  posts                Post[]
+  comments             Comment[]
+  postLikes            PostLike[]
+  commentLikes         CommentLike[]
+  saves                Save[]
+  products             Product[]
+  orders               Order[]
+  reviews              Review[]
+  followers            Follow[]      @relation("Followers")
+  following            Follow[]      @relation("Following")
 
   @@map("users")
 }
