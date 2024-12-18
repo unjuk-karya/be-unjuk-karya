@@ -142,39 +142,34 @@ const productService = {
 
   deleteProduct: async (data) => {
     const { id, userId } = data;
-
+  
     const existingProduct = await prisma.product.findUnique({
       where: {
         id: parseInt(id),
         deletedAt: null
       }
     });
-
+  
     if (!existingProduct) {
       throw new NotFoundError("Product");
     }
-
+  
     if (existingProduct.userId !== parseInt(userId)) {
       throw new UnauthorizedError("You are not authorized to delete this product");
     }
-
+  
     try {
-      // if (existingProduct.image) {
-      //   const imageName = existingProduct.image.split('/').pop();
-      //   try {
-      //     await bucket.file(`products/${imageName}`).delete();
-      //   } catch (err) {
-      //     throw new Error("Failed to delete image");
-      //   }
-      // }
-
+      await prisma.save.deleteMany({
+        where: { productId: parseInt(id) }
+      });
+  
       await prisma.product.update({
         where: { id: parseInt(id) },
         data: {
           deletedAt: new Date(),
         }
       });
-
+  
       return true;
     } catch (error) {
       throw new Error("Failed to delete product");
@@ -249,6 +244,8 @@ const productService = {
           .flatMap(order => order.reviews
             .map(review => review.rating)));
   
+      const isMyself = product.user.id === parseInt(userId);
+  
       return {
         id: product.id,
         name: product.name,
@@ -278,7 +275,8 @@ const productService = {
         totalPurchases: product._count.orders,
         rating: Number(averageRating.toFixed(1)),
         totalRatings: ratings.length,
-        isSaved: product.saves.length > 0
+        isSaved: product.saves.length > 0,
+        isMyself
       };
   
     } catch (error) {

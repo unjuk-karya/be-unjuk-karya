@@ -133,8 +133,7 @@ const profileService = {
           select: {
             following: true,
             followers: true,
-            posts: true,
-            products: true
+            posts: true
           }
         }
       }
@@ -143,6 +142,13 @@ const profileService = {
     if (!user) {
       throw new NotFoundError("User");
     }
+  
+    const productsCount = await prisma.product.count({
+      where: {
+        userId: parseInt(userId),
+        deletedAt: null
+      }
+    });
   
     let isFollowing = false;
     const isMyself = parseInt(userId) === parseInt(currentUserId);
@@ -164,7 +170,7 @@ const profileService = {
       followingCount: user._count.following,
       followersCount: user._count.followers,
       postsCount: user._count.posts,
-      productsCount: user._count.products,
+      productsCount,
       _count: undefined
     }
   },
@@ -339,7 +345,8 @@ const profileService = {
   
       const products = await prisma.product.findMany({
         where: {
-          userId: parseInt(userId)
+          userId: parseInt(userId),
+          deletedAt: null
         },
         include: {
           user: {
@@ -384,7 +391,8 @@ const profileService = {
   
       const totalProducts = await prisma.product.count({
         where: {
-          userId: parseInt(userId)
+          userId: parseInt(userId),
+          deletedAt: null
         }
       });
   
@@ -420,16 +428,17 @@ const profileService = {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId) }
     });
-
+  
     if (!user) {
       throw new NotFoundError("User");
     }
-
+  
     try {
       const skip = (page - 1) * pageSize;
-
+  
       const products = await prisma.product.findMany({
         where: {
+          deletedAt: null,
           saves: {
             some: {
               userId: parseInt(userId)
@@ -478,9 +487,10 @@ const profileService = {
           createdAt: 'desc'
         }
       });
-
+  
       const totalSavedProducts = await prisma.product.count({
         where: {
+          deletedAt: null,
           saves: {
             some: {
               userId: parseInt(userId)  
@@ -488,12 +498,12 @@ const profileService = {
           }
         }
       });
-
+  
       const productsWithDetails = products.map(product => {
         const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
         const averageRating = ratings.length > 0 ? 
           ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
-
+  
         const { _count, orders, saves, ...productData } = product;
         return {
           ...productData,
@@ -502,7 +512,7 @@ const profileService = {
           isSaved: saves.length > 0 
         };
       });
-
+  
       return {
         products: productsWithDetails,
         pagination: {

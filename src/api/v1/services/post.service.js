@@ -129,7 +129,6 @@ const postService = {
         prisma.commentLike.deleteMany({ where: { comment: { postId: parseInt(id) } } }),
         prisma.comment.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.postLike.deleteMany({ where: { postId: parseInt(id) } }),
-        prisma.save.deleteMany({ where: { postId: parseInt(id) } }),
         prisma.post.delete({ where: { id: parseInt(id) } })
       ]);
 

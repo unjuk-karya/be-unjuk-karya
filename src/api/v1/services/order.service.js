@@ -277,15 +277,24 @@ const orderService = {
                 where: { userId: parseInt(userId) }
             });
     
-            const ordersWithStoreDetails = orders.map(order => {
+            const ordersWithStoreDetails = await Promise.all(orders.map(async order => {
                 const { product, reviews, ...orderData } = order;
+    
+                if (order.status === 'PENDING' && !order.paidAt && new Date(order.paymentDue) < new Date()) {
+                    await prisma.order.update({
+                        where: { id: order.id },
+                        data: { status: 'EXPIRED' }
+                    });
+                    orderData.status = 'EXPIRED';
+                }
+    
                 return {
                     ...orderData,
                     storeId: product.user.id,
                     storeName: product.user.username,
-                    isReviewed: reviews.length > 0,
+                    reviewId: reviews.length > 0 ? reviews[0].id : null,
                 };
-            });
+            }));
     
             return {
                 orders: ordersWithStoreDetails,
