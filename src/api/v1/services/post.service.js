@@ -198,11 +198,21 @@ const postService = {
     }
   },
 
-  getAllPosts: async (userId, page = 1, pageSize = 10) => {
+  getAllPosts: async (userId, page = 1, pageSize = 10, search = '') => {
     try {
       const skip = (page - 1) * pageSize;
 
+      const where = {
+        ...(search && {
+          OR: [
+            { title: { contains: search } },
+            { content: { contains: search } }
+          ]
+        })
+      };
+
       const posts = await prisma.post.findMany({
+        where,
         include: {
           user: {
             select: {
@@ -231,7 +241,7 @@ const postService = {
         }
       });
 
-      const totalPosts = await prisma.post.count();
+      const totalPosts = await prisma.post.count({ where });
 
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {

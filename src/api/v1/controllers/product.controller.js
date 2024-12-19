@@ -94,9 +94,10 @@ const productController = {
       const userId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
-  
-      const result = await productService.getAllProducts(page, pageSize, userId);
-  
+      const search = req.query.search || '';
+
+      const result = await productService.getAllProducts(page, pageSize, userId, search);
+
       return res.json(createSuccessResponse(result, "Products fetched successfully"));
     } catch (error) {
       return res.status(error.status || 500).json(createErrorResponse(error));

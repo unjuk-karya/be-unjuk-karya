@@ -142,34 +142,34 @@ const productService = {
 
   deleteProduct: async (data) => {
     const { id, userId } = data;
-  
+
     const existingProduct = await prisma.product.findUnique({
       where: {
         id: parseInt(id),
         deletedAt: null
       }
     });
-  
+
     if (!existingProduct) {
       throw new NotFoundError("Product");
     }
-  
+
     if (existingProduct.userId !== parseInt(userId)) {
       throw new UnauthorizedError("You are not authorized to delete this product");
     }
-  
+
     try {
       await prisma.save.deleteMany({
         where: { productId: parseInt(id) }
       });
-  
+
       await prisma.product.update({
         where: { id: parseInt(id) },
         data: {
           deletedAt: new Date(),
         }
       });
-  
+
       return true;
     } catch (error) {
       throw new Error("Failed to delete product");
@@ -230,22 +230,22 @@ const productService = {
           }
         }
       });
-  
+
       if (!product) {
         throw new NotFoundError("Product");
       }
-  
+
       const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
-      const averageRating = ratings.length > 0 ? 
+      const averageRating = ratings.length > 0 ?
         ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
-  
+
       const sellerRatings = product.user.products
         .flatMap(prod => prod.orders
           .flatMap(order => order.reviews
             .map(review => review.rating)));
-  
+
       const isMyself = product.user.id === parseInt(userId);
-  
+
       return {
         id: product.id,
         name: product.name,
@@ -264,7 +264,7 @@ const productService = {
           username: product.user.username,
           avatar: product.user.avatar,
           totalProducts: product.user.products.length,
-          sellerRating: sellerRatings.length > 0 ? 
+          sellerRating: sellerRatings.length > 0 ?
             Number((sellerRatings.reduce((a, b) => a + b, 0) / sellerRatings.length).toFixed(1)) : 0,
           totalSellerRatings: sellerRatings.length
         },
@@ -278,7 +278,7 @@ const productService = {
         isSaved: product.saves.length > 0,
         isMyself
       };
-  
+
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
@@ -287,11 +287,20 @@ const productService = {
     }
   },
 
-  getAllProducts: async (page = 1, pageSize = 10, userId) => {
+  getAllProducts: async (page = 1, pageSize = 10, userId, search) => {
     try {
       const skip = (page - 1) * pageSize;
-      const where = { deletedAt: null };
-  
+
+      const where = {
+        deletedAt: null,
+        ...(search && {
+          OR: [
+            { name: { contains: search } },      
+            { description: { contains: search } }
+          ]
+        })
+      };
+
       const products = await prisma.product.findMany({
         where,
         include: {
@@ -332,14 +341,14 @@ const productService = {
         take: pageSize,
         orderBy: { createdAt: 'desc' }
       });
-  
+
       const totalProducts = await prisma.product.count({ where });
-  
+
       const productsWithDetails = products.map(product => {
         const ratings = product.orders.flatMap(order => order.reviews.map(review => review.rating));
-        const averageRating = ratings.length > 0 ? 
+        const averageRating = ratings.length > 0 ?
           ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length : 0;
-  
+
         const { _count, orders, saves, ...productData } = product;
         return {
           ...productData,
@@ -348,7 +357,7 @@ const productService = {
           isSaved: saves.length > 0
         };
       });
-  
+
       return {
         products: productsWithDetails,
         pagination: {
@@ -366,11 +375,11 @@ const productService = {
   getProductReviews: async (id, page = 1, pageSize = 10) => {
     try {
       const skip = (page - 1) * pageSize;
-  
+
       const reviews = await prisma.review.findMany({
         where: {
           order: {
-            productId: parseInt(id) 
+            productId: parseInt(id)
           }
         },
         include: {
@@ -395,7 +404,7 @@ const productService = {
           createdAt: 'desc'
         }
       });
-  
+
       const totalReviews = await prisma.review.count({
         where: {
           order: {
@@ -403,7 +412,7 @@ const productService = {
           }
         }
       });
-  
+
       return {
         reviews,
         pagination: {

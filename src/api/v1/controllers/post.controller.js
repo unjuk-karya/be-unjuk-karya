@@ -89,8 +89,9 @@ const postController = {
       const userId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
+      const search = req.query.search || '';
   
-      const result = await postService.getAllPosts(userId, page, pageSize);
+      const result = await postService.getAllPosts(userId, page, pageSize, search);
   
       return res.json(createSuccessResponse(result, "Posts fetched successfully"));
     } catch (error) {
