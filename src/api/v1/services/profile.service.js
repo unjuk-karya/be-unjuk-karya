@@ -4,49 +4,46 @@ const bucket = require('../../../config/gcs');
 
 const profileService = {
   updateProfile: async (data) => {
-    const { id, email, username, name, phone, address, bio, avatar, coverPhoto, midtransServerKey, midtransClientKey, midtransIsProduction } = data;
-  
+    const { id, email, username, name, phone, address, bio, avatar, coverPhoto } = data;
+
     const existingUser = await prisma.user.findUnique({
       where: { id: parseInt(id) }
     });
-  
+
     if (!existingUser) {
       throw new NotFoundError("User");
     }
-  
+
     const errors = {};
-  
+
     if (email !== undefined && email !== existingUser.email) {
       const emailExists = await prisma.user.findUnique({ where: { email } });
       if (emailExists) {
         errors.email = ["The email has already been taken."];
       }
     }
-  
+
     if (username !== undefined && username !== existingUser.username) {
       const usernameExists = await prisma.user.findUnique({ where: { username } });
       if (usernameExists) {
         errors.username = ["The username has already been taken."];
       }
     }
-  
+
     if (Object.keys(errors).length > 0) {
       throw new ValidationError(errors);
     }
-  
+
     try {
       const updateData = {};
-  
+
       if (name !== undefined) updateData.name = name;
       if (email !== undefined) updateData.email = email;
       if (username !== undefined) updateData.username = username;
       if (phone !== undefined) updateData.phone = phone;
       if (address !== undefined) updateData.address = address;
       if (bio !== undefined) updateData.bio = bio;
-      if (midtransServerKey !== undefined) updateData.midtransServerKey = midtransServerKey;
-      if (midtransClientKey !== undefined) updateData.midtransClientKey = midtransClientKey;
-      if (midtransIsProduction !== undefined) updateData.midtransIsProduction = midtransIsProduction;
-  
+
       if (avatar) {
         updateData.avatar = avatar;
         if (existingUser.avatar) {
@@ -58,7 +55,7 @@ const profileService = {
           }
         }
       }
-  
+
       if (coverPhoto) {
         updateData.coverPhoto = coverPhoto;
         if (existingUser.coverPhoto) {
@@ -70,7 +67,7 @@ const profileService = {
           }
         }
       }
-  
+
       const updatedUser = await prisma.user.update({
         where: { id: parseInt(id) },
         data: updateData,
@@ -84,16 +81,13 @@ const profileService = {
           bio: true,
           avatar: true,
           coverPhoto: true,
-          midtransServerKey: true,
-          midtransClientKey: true,
-          midtransIsProduction: true,
           createdAt: true,
           updatedAt: true
         }
       });
-  
+
       return updatedUser;
-  
+
     } catch (error) {
       if (avatar) {
         const newAvatarName = avatar.split('/').pop();
@@ -123,9 +117,6 @@ const profileService = {
         address: true,
         avatar: true,
         coverPhoto: true,
-        midtransServerKey: true,
-        midtransClientKey: true,
-        midtransIsProduction: true,
         bio: true,
         createdAt: true,
         updatedAt: true,
@@ -138,21 +129,21 @@ const profileService = {
         }
       }
     });
-  
+
     if (!user) {
       throw new NotFoundError("User");
     }
-  
+
     const productsCount = await prisma.product.count({
       where: {
         userId: parseInt(userId),
         deletedAt: null
       }
     });
-  
+
     let isFollowing = false;
     const isMyself = parseInt(userId) === parseInt(currentUserId);
-  
+
     if (!isMyself) {
       const followStatus = await prisma.follow.findFirst({
         where: {
@@ -162,7 +153,7 @@ const profileService = {
       });
       isFollowing = !!followStatus;
     }
-  
+
     return {
       ...user,
       isMyself,

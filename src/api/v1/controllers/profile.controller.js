@@ -6,7 +6,7 @@ const profileController = {
   updateProfile: async (req, res) => {
     try {
       const userId = req.user.id;
-      const { name, email, username, phone, address, bio, midtransServerKey, midtransClientKey, midtransIsProduction } = req.body;
+      const { name, email, username, phone, address, bio } = req.body;
       const avatar = req.files?.avatar?.[0]?.cloudStoragePublicUrl;
       const coverPhoto = req.files?.coverPhoto?.[0]?.cloudStoragePublicUrl;
   
@@ -19,10 +19,7 @@ const profileController = {
         address,
         bio,
         avatar,
-        coverPhoto,
-        midtransServerKey,
-        midtransClientKey,
-        midtransIsProduction: midtransIsProduction === 'true' 
+        coverPhoto
       });
   
       return res.json(

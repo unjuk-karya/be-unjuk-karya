@@ -201,7 +201,7 @@ const postService = {
   getAllPosts: async (userId, page = 1, pageSize = 10, search = '') => {
     try {
       const skip = (page - 1) * pageSize;
-
+  
       const where = {
         ...(search && {
           OR: [
@@ -210,7 +210,7 @@ const postService = {
           ]
         })
       };
-
+  
       const posts = await prisma.post.findMany({
         where,
         include: {
@@ -240,20 +240,21 @@ const postService = {
           createdAt: 'desc'
         }
       });
-
+  
       const totalPosts = await prisma.post.count({ where });
-
+  
       const postsWithFollow = await Promise.all(
         posts.map(async (post) => {
           const { likes, _count, ...postData } = post;
           return {
             ...postData,
             likesCount: _count.likes,
-            commentsCount: _count.comments
+            commentsCount: _count.comments,
+            isLiked: likes.length > 0
           };
         })
       );
-
+  
       return {
         posts: postsWithFollow,
         pagination: {
