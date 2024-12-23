@@ -13,7 +13,7 @@ This is the backend for the Unjuk Karya.
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/ruang-seni/be-ruang-seni.git
+    git clone https://github.com/unjuk-karya/be-unjuk-karya.git
     ```
 
 2. Change to the project directory:
