@@ -18,7 +18,7 @@ This is the backend for the Unjuk Karya.
 
 2. Change to the project directory:
     ```sh
-    cd be-ruang-seni
+    cd be-unjuk-karya
     ```
 
 3. Copy the example environment file and configure it:
